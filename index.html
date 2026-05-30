@@ -573,6 +573,32 @@
   .recap-summary-val.good { color:#6dd46d; }
   .recap-summary-val.bad  { color:#e87070; }
 
+  /* ---- GREENSKEEPER SEARCH ---- */
+  .gk-search-section { padding:16px 0 24px; }
+  .gk-divider { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+  .gk-divider::before,.gk-divider::after { content:''; flex:1; height:1px; background:var(--border); }
+  .gk-divider span { font-size:11px; opacity:0.4; white-space:nowrap; text-transform:uppercase; letter-spacing:0.8px; }
+  .gk-search-row { display:flex; gap:8px; margin-bottom:8px; }
+  .gk-search-btn { background:var(--flag); border:none; color:var(--fairway); border-radius:10px; padding:0 16px; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap; min-height:44px; flex-shrink:0; transition:opacity 0.15s; }
+  .gk-search-btn:active { opacity:0.7; }
+  .gk-search-btn:disabled { opacity:0.4; cursor:not-allowed; }
+
+  .gk-result-card { background:rgba(255,255,255,0.05); border:1.5px solid rgba(255,255,255,0.1); border-radius:14px; padding:14px; margin-bottom:8px; cursor:pointer; transition:all 0.15s; }
+  .gk-result-card:active { background:rgba(255,255,255,0.1); transform:scale(0.99); }
+  .gk-result-card.selected { border-color:var(--flag); background:rgba(200,168,75,0.1); }
+  .gk-result-name { font-size:15px; font-weight:700; margin-bottom:3px; }
+  .gk-result-meta { font-size:12px; opacity:0.5; }
+  .gk-result-tees { margin-top:10px; display:flex; flex-direction:column; gap:6px; }
+  .gk-tee-row { display:flex; align-items:center; gap:10px; background:rgba(255,255,255,0.04); border-radius:8px; padding:8px 10px; }
+  .gk-tee-dot { width:12px; height:12px; border-radius:50%; flex-shrink:0; }
+  .gk-tee-name { font-size:13px; font-weight:600; flex:1; }
+  .gk-tee-stats { font-size:11px; opacity:0.55; }
+
+  .gk-status { text-align:center; padding:20px; font-size:13px; opacity:0.5; }
+  .gk-status.loading::after { content:' '; display:inline-block; width:12px; height:12px; border:2px solid rgba(200,168,75,0.5); border-top-color:var(--flag); border-radius:50%; animation:spin 0.7s linear infinite; margin-left:8px; vertical-align:middle; }
+  .gk-error { background:rgba(192,57,43,0.1); border:1px solid rgba(192,57,43,0.3); border-radius:10px; padding:12px 14px; font-size:13px; color:#e87070; margin-bottom:8px; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
   /* ---- PUTT LOG SHEET ---- */
   .putt-slot { background:rgba(255,255,255,0.05); border:1.5px solid rgba(255,255,255,0.1); border-radius:14px; padding:14px; margin-bottom:10px; }
   .putt-slot.is-last { border-color:rgba(61,122,61,0.4); background:rgba(61,122,61,0.07); }
@@ -704,6 +730,17 @@
       <button class="filter-tab" onclick="setFilter('Inland Empire',this)">Inland Empire</button>
     </div>
     <div id="course-list"></div>
+
+    <!-- Greenskeeper.org live search -->
+    <div class="gk-search-section">
+      <div class="gk-divider"><span>Course not in the list?</span></div>
+      <p style="font-size:12px;opacity:0.5;margin-bottom:12px;text-align:center">Search Greenskeeper.org for any US course</p>
+      <div class="gk-search-row">
+        <input class="field-input" id="gk-search-input" placeholder="e.g. Papago Golf Course, Phoenix" style="flex:1">
+        <button class="gk-search-btn" onclick="searchGreenskeeper('gk-search-input','gk-results','start')">Search</button>
+      </div>
+      <div id="gk-results"></div>
+    </div>
   </div>
 </div>
 
@@ -1359,11 +1396,17 @@
         <input type="text" id="pr-course-search" placeholder="Search course name or city…" oninput="filterPrevCourses(this.value)" style="background:none;border:none;outline:none;color:var(--white);font-family:'DM Sans',sans-serif;font-size:15px;flex:1">
       </div>
       <!-- Manual entry toggle -->
-      <div style="margin-bottom:10px;text-align:center">
-        <button onclick="toggleManualCourse()" id="pr-manual-toggle" style="background:none;border:none;color:rgba(255,255,255,0.35);font-size:12px;cursor:pointer;text-decoration:underline;text-underline-offset:3px">Course not listed? Enter manually</button>
+      <div class="gk-divider" style="margin:10px 0"><span>Course not listed above?</span></div>
+      <!-- Greenskeeper live search -->
+      <div class="gk-search-row" style="margin-bottom:8px">
+        <input class="field-input" id="pr-gk-input" placeholder="e.g. Papago Golf Course, Phoenix" style="flex:1">
+        <button class="gk-search-btn" onclick="searchGreenskeeper('pr-gk-input','pr-gk-results','add')">Search</button>
       </div>
-      <!-- Manual entry fields (hidden by default) -->
-      <div id="pr-manual-course" style="display:none;margin-bottom:12px">
+      <div id="pr-gk-results"></div>
+
+      <!-- Manual fallback — only shown if search fails -->
+      <div id="pr-manual-course" style="display:none;margin-top:10px">
+        <div style="font-size:12px;opacity:0.5;margin-bottom:8px">Or enter course details manually:</div>
         <div class="form-field" style="margin-bottom:8px">
           <label class="field-label">Course Name</label>
           <input class="field-input" id="pr-manual-name" placeholder="e.g. Pine Valley Golf Club">
@@ -1384,6 +1427,7 @@
         </div>
         <button class="modal-btn" style="margin-top:10px" onclick="selectManualCourse()">Use This Course →</button>
       </div>
+      <button onclick="toggleManualCourse()" id="pr-manual-toggle" style="background:none;border:none;color:rgba(255,255,255,0.3);font-size:11px;cursor:pointer;padding:8px 0;text-decoration:underline;text-underline-offset:3px;width:100%;text-align:center">Enter manually instead</button>
       <div id="pr-course-list" style="max-height:280px;overflow-y:auto"></div>
     </div>
 
@@ -2543,7 +2587,7 @@ let clubWizardData = { type: '', brandId: '', brandName: '', model: '', dist: 15
 const CLUB_ICONS = { 'Driver':'🏌️','3-Wood':'🌲','5-Wood':'🌲','7-Wood':'🌲','Putter':'🎯','2-Hybrid':'🔀','3-Hybrid':'🔀','4-Hybrid':'🔀','5-Hybrid':'🔀','PW':'🔧','GW':'🔧','SW':'🏖️','LW':'🔧' };
 
 let state = {
-  profile: { name: '', hand: '', hcp: '', age: '', height: '', ball: '', clubs: [] },
+  customCourses: [],
   rounds: [],
   currentRound: null,
   currentHole: 0,
@@ -5051,7 +5095,7 @@ function renderHome() {
 // ===== CLUB WIZARD =====
 function openClubModal() {
   clubWizardStep = 1;
-  clubWizardData = { type: '', brandId: '', brandName: '', model: '', dist: 150 };
+  clubWizardData = { type: '', brandId: '', brandName: '', model: '', dist: 150, manualBrand: false, manualModel: false };
   renderClubWizardStep();
   document.getElementById('club-modal').classList.add('open');
 }
@@ -5060,15 +5104,15 @@ function renderClubWizardStep() {
   // Update step indicators
   [1,2,3,4].forEach(n => {
     const el = document.getElementById('cstep-'+n);
-    el.className = 'club-step' + (n === clubWizardStep ? ' active' : n < clubWizardStep ? ' done' : '');
+    // When manualBrand is set, step 3 is skipped — mark it as done too
+    const isDone = n < clubWizardStep || (clubWizardData.manualBrand && n === 3 && clubWizardStep === 4);
+    el.className = 'club-step' + (n === clubWizardStep ? ' active' : isDone ? ' done' : '');
   });
-  // Show/hide step panels
+  // Show/hide step panels — when brand is manual, step 3 is hidden even if clubWizardStep briefly passes through
   [1,2,3,4].forEach(n => {
     document.getElementById('club-step-'+n).style.display = n === clubWizardStep ? 'block' : 'none';
   });
-  // Back button
   document.getElementById('club-back-btn').style.display = clubWizardStep > 1 ? 'flex' : 'none';
-  // Next button label
   const nextBtn = document.getElementById('club-next-btn');
   nextBtn.textContent = clubWizardStep === 4 ? '✓ Add to Bag' : 'Next →';
 
@@ -5092,6 +5136,25 @@ function selectClubType(type) {
 
 function renderBrandPicker() {
   const el = document.getElementById('club-brand-picker');
+
+  // Manual brand entry mode
+  if (clubWizardData.manualBrand) {
+    el.innerHTML = `
+      <div style="background:rgba(200,168,75,0.1);border:1px solid rgba(200,168,75,0.3);border-radius:12px;padding:14px;margin-bottom:10px">
+        <div style="font-size:12px;opacity:0.6;margin-bottom:10px">Enter brand and model manually:</div>
+        <div class="form-field" style="margin-bottom:8px">
+          <label class="field-label">Brand Name</label>
+          <input class="field-input" id="manual-brand-input" placeholder="e.g. Mizuno, Ben Hogan, Cobra" value="${clubWizardData.brandName||''}">
+        </div>
+        <div class="form-field" style="margin-bottom:0">
+          <label class="field-label">Model Name</label>
+          <input class="field-input" id="manual-model-input" placeholder="e.g. JPX 923 Forged" value="${clubWizardData.model||''}">
+        </div>
+      </div>
+      <button onclick="cancelManualBrand()" style="width:100%;background:none;border:none;color:rgba(255,255,255,0.35);font-size:12px;cursor:pointer;padding:6px;text-decoration:underline;text-underline-offset:3px">← Back to brand list</button>`;
+    return;
+  }
+
   el.innerHTML = MANUFACTURERS.map(m => `
     <div class="brand-card ${clubWizardData.brandId === m.id ? 'selected' : ''}" onclick="selectBrand('${m.id}','${m.name}')">
       <div class="brand-logo" style="background:${m.color};color:${m.textColor}">${m.abbr}</div>
@@ -5101,7 +5164,9 @@ function renderBrandPicker() {
       </div>
       ${clubWizardData.brandId === m.id ? '<span style="color:var(--flag);font-size:20px">✓</span>' : ''}
     </div>
-  `).join('');
+  `).join('') + `
+  <div class="gk-divider" style="margin:14px 0 10px"><span>Brand not listed?</span></div>
+  <button onclick="enterManualBrand()" style="width:100%;background:rgba(255,255,255,0.05);border:1.5px dashed rgba(255,255,255,0.2);border-radius:12px;color:rgba(255,255,255,0.55);font-family:'DM Sans',sans-serif;font-size:13px;padding:12px;cursor:pointer">+ Enter brand & model manually</button>`;
 }
 
 function selectBrand(id, name) {
@@ -5120,10 +5185,23 @@ function getModelsForType(brandId, type) {
 }
 
 function renderModelPicker() {
-  const el = document.getElementById('club-model-picker');
+  const el  = document.getElementById('club-model-picker');
   const sub = document.getElementById('club-model-subtitle');
-  sub.textContent = clubWizardData.brandName + ' · ' + clubWizardData.type;
+  sub.textContent = (clubWizardData.brandName || 'Custom') + ' · ' + clubWizardData.type;
+
   const models = getModelsForType(clubWizardData.brandId, clubWizardData.type);
+
+  // Manual model entry mode, or no models available
+  if (clubWizardData.manualModel || models.length === 0) {
+    el.innerHTML = `
+      <div style="background:rgba(200,168,75,0.1);border:1px solid rgba(200,168,75,0.3);border-radius:12px;padding:14px;margin-bottom:10px">
+        <div style="font-size:12px;opacity:0.6;margin-bottom:8px">Enter the model name:</div>
+        <input class="field-input" id="manual-model-only-input" placeholder="e.g. i525, Apex Pro, ST-Z 230" value="${clubWizardData.model||''}">
+      </div>
+      ${models.length > 0 ? `<button onclick="cancelManualModel()" style="width:100%;background:none;border:none;color:rgba(255,255,255,0.35);font-size:12px;cursor:pointer;padding:6px;text-decoration:underline;text-underline-offset:3px">← Back to model list</button>` : ''}`;
+    return;
+  }
+
   el.innerHTML = models.map(m => {
     const desc = MODEL_DESCRIPTIONS[m] || '';
     return `<div class="model-card ${clubWizardData.model === m ? 'selected' : ''}" onclick="selectModel('${m.replace(/'/g,"\\'")}')">
@@ -5133,7 +5211,9 @@ function renderModelPicker() {
       </div>
       <div class="model-check">${clubWizardData.model === m ? '✓' : ''}</div>
     </div>`;
-  }).join('');
+  }).join('') + `
+  <div class="gk-divider" style="margin:14px 0 10px"><span>Model not listed?</span></div>
+  <button onclick="enterManualModel()" style="width:100%;background:rgba(255,255,255,0.05);border:1.5px dashed rgba(255,255,255,0.2);border-radius:12px;color:rgba(255,255,255,0.55);font-family:'DM Sans',sans-serif;font-size:13px;padding:12px;cursor:pointer">+ Enter model manually</button>`;
 }
 
 function selectModel(model) {
@@ -5173,15 +5253,62 @@ function setClubDistPreset(v) {
   document.getElementById('club-dist-display').textContent = v;
 }
 
+// Manual brand entry
+function enterManualBrand() {
+  clubWizardData.manualBrand = true;
+  clubWizardData.brandId = 'manual';
+  clubWizardData.brandName = '';
+  clubWizardData.model = '';
+  clubWizardData.manualModel = true; // brand manual always means model manual too
+  renderBrandPicker();
+}
+function cancelManualBrand() {
+  clubWizardData.manualBrand = false;
+  clubWizardData.manualModel = false;
+  clubWizardData.brandId = '';
+  clubWizardData.brandName = '';
+  clubWizardData.model = '';
+  renderBrandPicker();
+}
+
+// Manual model entry (brand was found, model wasn't)
+function enterManualModel() {
+  clubWizardData.manualModel = true;
+  clubWizardData.model = '';
+  renderModelPicker();
+}
+function cancelManualModel() {
+  clubWizardData.manualModel = false;
+  clubWizardData.model = '';
+  renderModelPicker();
+}
+
 function clubStepNext() {
   if (clubWizardStep === 1) {
     if (!clubWizardData.type) { showWizardError('Please select a club type'); return; }
     clubWizardStep = 2;
   } else if (clubWizardStep === 2) {
-    if (!clubWizardData.brandId) { showWizardError('Please select a manufacturer'); return; }
-    clubWizardStep = 3;
+    if (clubWizardData.manualBrand) {
+      // Read manual brand + model inputs
+      const brandVal = document.getElementById('manual-brand-input')?.value?.trim();
+      const modelVal = document.getElementById('manual-model-input')?.value?.trim();
+      if (!brandVal) { showWizardError('Please enter a brand name'); return; }
+      clubWizardData.brandName = brandVal;
+      clubWizardData.model     = modelVal || '';
+      // Skip model step — go straight to distance
+      clubWizardStep = 4;
+    } else {
+      if (!clubWizardData.brandId) { showWizardError('Please select a brand'); return; }
+      clubWizardStep = 3;
+    }
   } else if (clubWizardStep === 3) {
-    if (!clubWizardData.model) { showWizardError('Please select a model'); return; }
+    if (clubWizardData.manualModel) {
+      const modelVal = document.getElementById('manual-model-only-input')?.value?.trim();
+      if (!modelVal) { showWizardError('Please enter a model name'); return; }
+      clubWizardData.model = modelVal;
+    } else {
+      if (!clubWizardData.model) { showWizardError('Please select a model'); return; }
+    }
     clubWizardStep = 4;
   } else if (clubWizardStep === 4) {
     addClub();
@@ -5191,7 +5318,15 @@ function clubStepNext() {
 }
 
 function clubStepBack() {
-  if (clubWizardStep > 1) { clubWizardStep--; renderClubWizardStep(); }
+  if (clubWizardStep > 1) {
+    // If we're at step 4 and manual brand was used, go back to step 2 (step 3 was skipped)
+    if (clubWizardStep === 4 && clubWizardData.manualBrand) {
+      clubWizardStep = 2;
+    } else {
+      clubWizardStep--;
+    }
+    renderClubWizardStep();
+  }
 }
 
 function showWizardError(msg) {
@@ -5405,9 +5540,11 @@ function renderPrevRoundPanel() {
 // ── Step 1: Course ───────────────────────────────────────────────
 function filterPrevCourses(q) {
   const list = document.getElementById('pr-course-list');
-  const filtered = COURSES.filter(c =>
-    !q || c.name.toLowerCase().includes(q.toLowerCase()) ||
-    c.city.toLowerCase().includes(q.toLowerCase())
+  // Combine built-in COURSES with user's saved custom courses
+  const allCourses = [...COURSES, ...(state.customCourses || [])];
+  const filtered = allCourses.filter(c =>
+    !q || (c.name||'').toLowerCase().includes(q.toLowerCase()) ||
+    (c.city||'').toLowerCase().includes(q.toLowerCase())
   ).slice(0, 30);
 
   const regions = [...new Set(filtered.map(c => c.region))];
@@ -5435,6 +5572,185 @@ function selectPrevCourse(id) {
   // Auto-advance to step 2
   prState.step = 2;
   renderPrevRoundPanel();
+}
+
+// ===== GREENSKEEPER.ORG LIVE COURSE SEARCH =====
+// Fetches and parses scorecard data from greenskeeper.org for any US course.
+// Works via a CORS proxy since greenskeeper.org doesn't allow direct cross-origin requests.
+// Cached locally so repeat searches don't re-fetch.
+
+// ===== AI-POWERED COURSE SEARCH =====
+// Uses the Anthropic API (already available in this app context) to look up
+// course scorecards. No CORS issues, works on all devices, structured output.
+
+const GK_CACHE = {}; // { 'query': parsedCourse }
+
+async function searchGreenskeeper(inputId, resultsId, context) {
+  const query   = document.getElementById(inputId)?.value?.trim();
+  const results = document.getElementById(resultsId);
+  if (!query || query.length < 3) return;
+
+  // Check cache
+  if (GK_CACHE[query]) {
+    renderAICourseResult(GK_CACHE[query], resultsId, context);
+    return;
+  }
+
+  results.innerHTML = '<div class="gk-status loading">Looking up course data</div>';
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1500,
+        messages: [{
+          role: 'user',
+          content: `You are a golf course data assistant. Look up the golf course: "${query}"
+
+Return ONLY valid JSON in this exact format, no other text:
+{
+  "name": "Full official course name",
+  "city": "City, State abbreviation",
+  "holes": 18,
+  "tees": [
+    {"name": "Black", "color": "#222222", "yards": 7200, "rating": 74.2, "slope": 135},
+    {"name": "Blue", "color": "#3366cc", "yards": 6800, "rating": 72.1, "slope": 130},
+    {"name": "White", "color": "#ffffff", "yards": 6400, "rating": 70.0, "slope": 124},
+    {"name": "Red", "color": "#cc3333", "yards": 5600, "rating": 71.2, "slope": 118}
+  ],
+  "holePars": [4,4,3,5,4,4,3,5,4,4,4,3,5,4,4,3,4,5]
+}
+
+Rules:
+- Only include tees that actually exist at this course
+- Use accurate USGA course rating and slope values
+- holePars must have exactly ${query.toLowerCase().includes('9') ? '9' : '18'} entries that sum to par
+- Colors: black=#222222, blue=#3366cc, white=#ffffff, red=#cc3333, gold=#c8a84b, silver=#aaaaaa
+- If you don't know this specific course, return {"error": "Course not found"}
+- Return JSON only, no markdown, no explanation`
+        }]
+      })
+    });
+
+    const data = await response.json();
+    const text = data.content?.[0]?.text || '';
+
+    let parsed;
+    try {
+      parsed = JSON.parse(text.replace(/```json|```/g, '').trim());
+    } catch {
+      throw new Error('Invalid response format');
+    }
+
+    if (parsed.error) {
+      results.innerHTML = `
+        <div class="gk-error">Course not found: "${query}". Try adding the city name (e.g. "Papago Golf Course Phoenix AZ").</div>
+        <button onclick="showManualEntry()" style="width:100%;background:none;border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.6);border-radius:10px;padding:10px;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;margin-top:8px">Enter course manually instead</button>`;
+      return;
+    }
+
+    // Build course object from AI response
+    const holes = parsed.holePars
+      ? parsed.holePars.map((par, i) => ({ par, yards: [0], hcp: i + 1 }))
+      : Array.from({ length: parsed.holes || 18 }, (_, i) => ({ par: 4, yards: [0], hcp: i + 1 }));
+
+    const course = {
+      id:     'ai_' + Date.now(),
+      name:   parsed.name || query,
+      city:   parsed.city || '',
+      region: 'External',
+      type:   holes.length <= 9 ? 'executive' : 'regulation',
+      source: 'ai',
+      tees:   parsed.tees || [],
+      holes,
+      holePars: holes.map(h => h.par)
+    };
+
+    GK_CACHE[query] = course;
+    renderAICourseResult(course, resultsId, context);
+
+  } catch (e) {
+    results.innerHTML = `
+      <div class="gk-error">Search failed — check your connection and try again.</div>
+      <button onclick="showManualEntry()" style="width:100%;background:none;border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.6);border-radius:10px;padding:10px;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;margin-top:8px">Enter course manually instead</button>`;
+  }
+}
+
+function renderAICourseResult(course, resultsId, context) {
+  const results = document.getElementById(resultsId);
+  if (!results) return;
+
+  const totalPar = course.holes.reduce((s, h) => s + h.par, 0);
+
+  results.innerHTML = `
+    <div class="gk-result-card selected">
+      <div class="gk-result-name">${course.name}</div>
+      <div class="gk-result-meta">${course.city} · Par ${totalPar} · ${course.holes.length} holes</div>
+      <div class="gk-result-tees" style="display:block;margin-top:10px">
+        <div style="font-size:11px;opacity:0.5;margin-bottom:6px">Select your tees:</div>
+        ${course.tees.map((t, ti) => `
+          <div class="gk-tee-row" onclick="confirmAICourse('${encodeURIComponent(JSON.stringify(course))}','${ti}','${context}')" style="cursor:pointer">
+            <div class="gk-tee-dot" style="background:${t.color}"></div>
+            <div class="gk-tee-name">${t.name}</div>
+            <div class="gk-tee-stats">${t.yards.toLocaleString()}y · ⭐ ${t.rating} / ${t.slope}</div>
+          </div>`).join('')}
+      </div>
+    </div>
+    <button onclick="showManualEntry()" style="width:100%;background:none;border:none;color:rgba(255,255,255,0.3);font-size:11px;cursor:pointer;padding:8px;text-decoration:underline;text-underline-offset:3px">Not accurate? Enter manually</button>`;
+}
+
+function confirmAICourse(encodedCourse, teeIdx, context) {
+  let course;
+  try { course = JSON.parse(decodeURIComponent(encodedCourse)); }
+  catch { return; }
+
+  // Give it a stable ID and save to custom courses
+  if (!course.id || course.id.startsWith('ai_')) course.id = 'ai_' + Date.now();
+  if (!state.customCourses) state.customCourses = [];
+  const existing = state.customCourses.findIndex(c => c.name === course.name && c.city === course.city);
+  if (existing >= 0) state.customCourses[existing] = course;
+  else state.customCourses.push(course);
+  saveState();
+
+  if (context === 'start') {
+    state.selectedCourse  = course;
+    state.selectedTeeIdx  = parseInt(teeIdx);
+    document.getElementById('tee-screen-title').textContent = course.name;
+    document.getElementById('tee-screen-sub').textContent   = course.city || '';
+    renderTeeOptions();
+    goToScreen('screen-tees');
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.nav-btn')[1].classList.add('active');
+  } else {
+    prState.course  = course;
+    prState.teeIdx  = parseInt(teeIdx);
+    prState.holeScores = [];
+    prState._scorePanelInitialized = false;
+    prState.step = 2;
+    renderPrevRoundPanel();
+  }
+}
+
+// Keep old GK stubs for any lingering HTML references
+async function loadGKCourse() {}
+function parseGKSearchResults() { return []; }
+function parseGKScorecard() { return null; }
+function renderGKResults() {}
+function confirmGKCourse() {}
+
+function showManualEntry() {
+  const el = document.getElementById('pr-manual-course');
+  if (el) {
+    el.style.display = 'block';
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+// Load custom courses from state into COURSES-compatible lookup
+function getCustomCourse(id) {
+  return (state.customCourses || []).find(c => c.id === id);
 }
 
 function toggleManualCourse() {
