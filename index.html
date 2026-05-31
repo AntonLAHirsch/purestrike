@@ -1,6 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <link rel="apple-touch-icon" href="https://antonlahirsch.github.io/purestrike/icon.jpeg">
+  <link rel="icon" type="image/jpeg" href="https://antonlahirsch.github.io/purestrike/icon.jpeg">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="PureStrike">
+  <meta name="theme-color" content="#1a6b1a">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -2675,7 +2681,13 @@ function loadState() {
   try {
     const s = localStorage.getItem('caddie_state');
     if (s) state = { ...state, ...JSON.parse(s) };
-    // Migrate: ensure all round IDs are strings (older rounds used numeric Date.now())
+    // Ensure profile always exists with defaults
+    if (!state.profile || typeof state.profile !== 'object') {
+      state.profile = { name: '', hand: '', hcp: '', age: '', height: '', ball: '', clubs: [] };
+    }
+    if (!state.profile.clubs) state.profile.clubs = [];
+    if (!state.customCourses) state.customCourses = [];
+    // Migrate: ensure all round IDs are strings
     if (state.rounds) {
       state.rounds.forEach(r => {
         if (!r.id || typeof r.id !== 'string') {
@@ -2683,7 +2695,10 @@ function loadState() {
         }
       });
     }
-  } catch(e) {}
+  } catch(e) {
+    // If state is corrupt, reset profile to safe defaults
+    if (!state.profile) state.profile = { name: '', hand: '', hcp: '', age: '', height: '', ball: '', clubs: [] };
+  }
 }
 
 // ===== NAVIGATION =====
@@ -2762,7 +2777,7 @@ function renderCourseList(q = '') {
   document.getElementById('course-count').textContent = filtered.length + ' course' + (filtered.length !== 1 ? 's' : '');
 
   if (filtered.length === 0) {
-    list.innerHTML = '<div style="opacity:0.4;text-align:center;padding:32px;font-size:14px">No courses found — search below to add one</div>';
+    list.innerHTML = '<div style="opacity:0.4;text-align:center;padding:32px;font-size:14px">No courses found — search below to add one<\/div>';
     return;
   }
 
@@ -2786,23 +2801,23 @@ function renderCourseList(q = '') {
         const teeYards  = c.tees?.[0]?.yards;
         const yardStr   = teeYards ? teeYards.toLocaleString() + ' yds' : '';
         const isKV      = c._source === 'community';
-        const badge     = isKV ? '<span class="course-type-badge badge-municipal" style="opacity:0.7">Community</span>' : '';
+        const badge     = isKV ? '<span class="course-type-badge badge-municipal" style="opacity:0.7">Community<\/span>' : '';
 
         return `<div class="course-item" onclick="selectCourseObj(${encodeURIComponent(JSON.stringify({id:c.id,name:c.name,_source:c._source}))})">
           <div style="flex:1;min-width:0">
-            <div class="course-name">${c.name}</div>
-            <div class="course-meta">${c.city} · ${holeCount} holes · Par ${par}${yardStr ? ' · ' + yardStr : ''}</div>
+            <div class="course-name">${c.name}<\/div>
+            <div class="course-meta">${c.city} · ${holeCount} holes · Par ${par}${yardStr ? ' · ' + yardStr : ''}<\/div>
             <div class="course-badges">
-              <span class="course-type-badge ${cls}">${label}</span>
+              <span class="course-type-badge ${cls}">${label}<\/span>
               ${badge}
-            </div>
-          </div>
-          <span class="course-arrow">›</span>
-        </div>`;
+            <\/div>
+          <\/div>
+          <span class="course-arrow">›<\/span>
+        <\/div>`;
       }).join('');
 
       const header = stateLabels[st] || st;
-      return `<div class="region-header">${header}</div>${rows}`;
+      return `<div class="region-header">${header}<\/div>${rows}`;
     }).join('');
 }
 
@@ -2841,13 +2856,13 @@ function renderTeeOptions() {
   const el = document.getElementById('tee-options-list');
   el.innerHTML = c.tees.map((t, i) => `
     <div class="tee-btn ${i === state.selectedTeeIdx ? 'selected' : ''}" onclick="selectTee(${i})">
-      <div class="tee-dot" style="background:${t.color};border:2px solid rgba(255,255,255,0.3)"></div>
+      <div class="tee-dot" style="background:${t.color};border:2px solid rgba(255,255,255,0.3)"><\/div>
       <div style="flex:1">
-        <div class="tee-name">${t.name} Tees</div>
-        <div class="tee-yds">${t.yards.toLocaleString()} yds</div>
-      </div>
-      <div class="tee-rating">Rating: ${t.rating}<br>Slope: ${t.slope}</div>
-    </div>
+        <div class="tee-name">${t.name} Tees<\/div>
+        <div class="tee-yds">${t.yards.toLocaleString()} yds<\/div>
+      <\/div>
+      <div class="tee-rating">Rating: ${t.rating}<br>Slope: ${t.slope}<\/div>
+    <\/div>
   `).join('');
 }
 
@@ -3038,23 +3053,23 @@ function renderFIRGIR() {
       : 'Tap to mark hit or missed';
     firHTML = `<button class="firgir-btn ${firCls}" onclick="toggleFIR()">
       <div class="firgir-text">
-        <div class="firgir-label">Fairway (FIR)</div>
-        <span class="firgir-sub">${firSub}</span>
-      </div>
-      <span class="firgir-pill">${firPill}</span>
-    </button>`;
+        <div class="firgir-label">Fairway (FIR)<\/div>
+        <span class="firgir-sub">${firSub}<\/span>
+      <\/div>
+      <span class="firgir-pill">${firPill}<\/span>
+    <\/button>`;
   }
 
   el.innerHTML = `<div class="firgir-row">
     ${firHTML}
     <button class="firgir-btn ${girCls}" onclick="toggleGIR()">
       <div class="firgir-text">
-        <div class="firgir-label">Green (GIR)</div>
-        <span class="firgir-sub">${girSub}</span>
-      </div>
-      <span class="firgir-pill">${girPill}</span>
-    </button>
-  </div>`;
+        <div class="firgir-label">Green (GIR)<\/div>
+        <span class="firgir-sub">${girSub}<\/span>
+      <\/div>
+      <span class="firgir-pill">${girPill}<\/span>
+    <\/button>
+  <\/div>`;
 }
 
 function toggleFIR() {
@@ -3143,7 +3158,7 @@ function renderHole() {
   const prog = document.getElementById('hole-progress');
   prog.innerHTML = course.holes.map((_, i) => {
     let cls = i < h ? 'done' : i === h ? 'current' : '';
-    return `<div class="prog-dot ${cls}"></div>`;
+    return `<div class="prog-dot ${cls}"><\/div>`;
   }).join('');
 
   // Running total
@@ -3669,12 +3684,12 @@ function renderPuttLogSlots() {
       : `Putt ${i + 1}`;
 
     const capHint = i > 0
-      ? `<span class="dist-constraint">max ${cap}ft</span>`
+      ? `<span class="dist-constraint">max ${cap}ft<\/span>`
       : '';
 
     const capWarning = overCap
-      ? `<div class="putt-dist-cap">⚠ Capped to ${cappedDist}ft (can't exceed putt ${i})</div>`
-      : '<div class="putt-dist-cap"></div>';
+      ? `<div class="putt-dist-cap">⚠ Capped to ${cappedDist}ft (can't exceed putt ${i})<\/div>`
+      : '<div class="putt-dist-cap"><\/div>';
 
     const canIncrease = puttLogSlots[i].dist < cap;
     const canDecrease = puttLogSlots[i].dist > 1;
@@ -3686,36 +3701,36 @@ function renderPuttLogSlots() {
     ];
     const resBtns = results.map(r =>
       `<button class="seg-btn${p.result === r.val ? ' active' : ''}" style="flex:1;font-size:12px"
-        onclick="setPuttSlotResult(${i},'${r.val}')">${r.label}</button>`
+        onclick="setPuttSlotResult(${i},'${r.val}')">${r.label}<\/button>`
     ).join('');
 
     const dirs = ['Center','Left','Right','Short'];
     const dirBtns = dirs.map(d =>
       `<button class="seg-btn${p.dir === d.toLowerCase() ? ' active' : ''}" style="flex:1;font-size:11px"
-        onclick="setPuttSlotDir(${i},'${d.toLowerCase()}')">${d}</button>`
+        onclick="setPuttSlotDir(${i},'${d.toLowerCase()}')">${d}<\/button>`
     ).join('');
 
     return `<div class="putt-slot${isLast ? ' is-last' : ''}" id="putt-slot-${i}">
       <div class="putt-slot-header">
-        <span class="putt-slot-num">${i + 1}</span>
-        <span class="putt-slot-label">${label}${capHint}</span>
-        ${count > 1 ? `<button class="putt-slot-remove" onclick="removePuttSlot(${i})">×</button>` : ''}
-      </div>
+        <span class="putt-slot-num">${i + 1}<\/span>
+        <span class="putt-slot-label">${label}${capHint}<\/span>
+        ${count > 1 ? `<button class="putt-slot-remove" onclick="removePuttSlot(${i})">×<\/button>` : ''}
+      <\/div>
       <div class="putt-dist-row">
-        <span class="putt-dist-label">Distance</span>
+        <span class="putt-dist-label">Distance<\/span>
         <div class="putt-dist-stepper">
-          <button class="putt-slot-dist-btn" onclick="changePuttSlotDist(${i},-1)" ${!canDecrease?'disabled':''}>−</button>
-          <div class="putt-slot-dist-val" id="pslot-dist-${i}">${puttLogSlots[i].dist}</div>
-          <button class="putt-slot-dist-btn" onclick="changePuttSlotDist(${i},1)" ${!canIncrease?'disabled':''}>+</button>
-          <span style="font-size:12px;opacity:0.4">ft</span>
-        </div>
-      </div>
+          <button class="putt-slot-dist-btn" onclick="changePuttSlotDist(${i},-1)" ${!canDecrease?'disabled':''}>−<\/button>
+          <div class="putt-slot-dist-val" id="pslot-dist-${i}">${puttLogSlots[i].dist}<\/div>
+          <button class="putt-slot-dist-btn" onclick="changePuttSlotDist(${i},1)" ${!canIncrease?'disabled':''}>+<\/button>
+          <span style="font-size:12px;opacity:0.4">ft<\/span>
+        <\/div>
+      <\/div>
       ${capWarning}
-      <div class="field-label" style="margin-bottom:6px">Result</div>
-      <div class="seg-ctrl" style="margin-bottom:10px">${resBtns}</div>
-      <div class="field-label" style="margin-bottom:6px">Direction</div>
-      <div class="seg-ctrl">${dirBtns}</div>
-    </div>`;
+      <div class="field-label" style="margin-bottom:6px">Result<\/div>
+      <div class="seg-ctrl" style="margin-bottom:10px">${resBtns}<\/div>
+      <div class="field-label" style="margin-bottom:6px">Direction<\/div>
+      <div class="seg-ctrl">${dirBtns}<\/div>
+    <\/div>`;
   }).join('');
 }
 
@@ -3839,18 +3854,18 @@ function renderPuttList() {
 
     // Lag tags
     let lagTag = '';
-    if (p.lag === 'made')   lagTag = '<span class="recap-tag blue">🎯 Lag</span>';
-    if (p.lag === 'missed') lagTag = '<span class="recap-tag warn">⚠ Missed Lag</span>';
+    if (p.lag === 'made')   lagTag = '<span class="recap-tag blue">🎯 Lag<\/span>';
+    if (p.lag === 'missed') lagTag = '<span class="recap-tag warn">⚠ Missed Lag<\/span>';
 
     return `<div class="recap-row">
-      <span class="recap-num">${i+1}</span>
-      <span class="recap-primary">${primary}</span>
-      ${secondary ? `<span class="recap-secondary">${secondary}</span>` : '<span class="recap-secondary"></span>'}
+      <span class="recap-num">${i+1}<\/span>
+      <span class="recap-primary">${primary}<\/span>
+      ${secondary ? `<span class="recap-secondary">${secondary}<\/span>` : '<span class="recap-secondary"><\/span>'}
       <div class="recap-tags">
         ${lagTag}
-        <span class="recap-tag ${res.cls}">${res.label}</span>
-      </div>
-    </div>`;
+        <span class="recap-tag ${res.cls}">${res.label}<\/span>
+      <\/div>
+    <\/div>`;
   }).join('');
 
   // Lag summary
@@ -3862,10 +3877,10 @@ function renderPuttList() {
     const pct = Math.round(lagMade / lagTotal * 100);
     const valCls = pct >= 75 ? 'good' : pct >= 50 ? 'blue' : 'bad';
     summary = `<div class="recap-summary">
-      <span class="recap-summary-icon">🎯</span>
-      <span class="recap-summary-text">${lagMade} of ${lagTotal} lag putt${lagTotal>1?'s':''} successful</span>
-      <span class="recap-summary-val ${valCls}">${pct}%</span>
-    </div>`;
+      <span class="recap-summary-icon">🎯<\/span>
+      <span class="recap-summary-text">${lagMade} of ${lagTotal} lag putt${lagTotal>1?'s':''} successful<\/span>
+      <span class="recap-summary-val ${valCls}">${pct}%<\/span>
+    <\/div>`;
   }
 
   el.innerHTML = rows + summary;
@@ -3919,12 +3934,12 @@ function renderShotLogSlots() {
     // Carry — belongs to THIS shot (known once next shot entered)
     const carryLine = shot.carry != null
       ? `<div style="display:flex;align-items:center;gap:6px;background:rgba(200,168,75,0.1);border:1px solid rgba(200,168,75,0.2);border-radius:8px;padding:6px 10px;margin-top:6px">
-          <span style="font-size:11px;opacity:0.6">Carry:</span>
-          <span style="font-family:'Playfair Display',serif;font-size:16px;font-weight:700;color:var(--flag)">${shot.carry} yds</span>
-          ${shot.club ? `<span style="font-size:11px;opacity:0.5;margin-left:4px">· ${shot.club}</span>` : ''}
-        </div>`
+          <span style="font-size:11px;opacity:0.6">Carry:<\/span>
+          <span style="font-family:'Playfair Display',serif;font-size:16px;font-weight:700;color:var(--flag)">${shot.carry} yds<\/span>
+          ${shot.club ? `<span style="font-size:11px;opacity:0.5;margin-left:4px">· ${shot.club}<\/span>` : ''}
+        <\/div>`
       : (i < shotLogSlots.length - 1
-          ? `<div style="font-size:11px;opacity:0.3;margin-top:4px">Carry calculated after entering next shot's distance</div>`
+          ? `<div style="font-size:11px;opacity:0.3;margin-top:4px">Carry calculated after entering next shot's distance<\/div>`
           : '');
 
     // Club suggestion based on distance REMAINING
@@ -3934,41 +3949,41 @@ function renderShotLogSlots() {
        : remainingDist != null ? suggestClubForDistance(remainingDist, par) : null);
 
     const clubBtns = clubList.map(c =>
-      `<button class="shot-club-btn${(shot.club||suggestedClub)===c?' selected':''}" onclick="setShotSlotClub(${i},'${c}')">${c}</button>`
+      `<button class="shot-club-btn${(shot.club||suggestedClub)===c?' selected':''}" onclick="setShotSlotClub(${i},'${c}')">${c}<\/button>`
     ).join('');
 
     const shapeBtns = ['hook','straight','slice'].map(s =>
-      `<button class="seg-btn${shot.shape===s?' active':''}" style="flex:1;font-size:12px" onclick="setShotSlotShape(${i},'${s}')">${s.charAt(0).toUpperCase()+s.slice(1)}</button>`
+      `<button class="seg-btn${shot.shape===s?' active':''}" style="flex:1;font-size:12px" onclick="setShotSlotShape(${i},'${s}')">${s.charAt(0).toUpperCase()+s.slice(1)}<\/button>`
     ).join('');
 
     const outcomes = ['Fairway','Rough','Bunker','Green','Water','OB','Trees'];
     const outBtns  = outcomes.map(o =>
-      `<button class="shot-out-btn${shot.outcome===o.toLowerCase()?' selected':''}" onclick="setShotSlotOutcome(${i},'${o.toLowerCase()}')">${o}</button>`
+      `<button class="shot-out-btn${shot.outcome===o.toLowerCase()?' selected':''}" onclick="setShotSlotOutcome(${i},'${o.toLowerCase()}')">${o}<\/button>`
     ).join('');
 
     return `<div class="shot-slot" id="shot-slot-${i}">
       <div class="shot-slot-header">
-        <span class="shot-slot-num">${i+1}</span>
-        <span class="shot-slot-label">${lbl}</span>
-        <button class="shot-slot-remove" onclick="removeShotSlot(${i})">×</button>
-      </div>
+        <span class="shot-slot-num">${i+1}<\/span>
+        <span class="shot-slot-label">${lbl}<\/span>
+        <button class="shot-slot-remove" onclick="removeShotSlot(${i})">×<\/button>
+      <\/div>
       <div class="shot-dist-row" style="margin-bottom:4px">
-        <span class="shot-dist-label">${pinLabel}</span>
+        <span class="shot-dist-label">${pinLabel}<\/span>
         <div class="shot-dist-stepper">
-          <button class="shot-dist-btn" onclick="changeShotDistModal(${i},-5)" ${isFirst?'style="opacity:0.4"':''}>−</button>
-          <div class="shot-dist-val" id="slot-dist-${i}">${distVal}</div>
-          <button class="shot-dist-btn" onclick="changeShotDistModal(${i},5)" ${isFirst?'style="opacity:0.4"':''}>+</button>
-          <span style="font-size:12px;opacity:0.4">yds</span>
-        </div>
-      </div>
-      <div class="field-label" style="margin-bottom:6px;margin-top:10px">Club</div>
-      <div class="shot-club-row">${clubBtns}</div>
+          <button class="shot-dist-btn" onclick="changeShotDistModal(${i},-5)" ${isFirst?'style="opacity:0.4"':''}>−<\/button>
+          <div class="shot-dist-val" id="slot-dist-${i}">${distVal}<\/div>
+          <button class="shot-dist-btn" onclick="changeShotDistModal(${i},5)" ${isFirst?'style="opacity:0.4"':''}>+<\/button>
+          <span style="font-size:12px;opacity:0.4">yds<\/span>
+        <\/div>
+      <\/div>
+      <div class="field-label" style="margin-bottom:6px;margin-top:10px">Club<\/div>
+      <div class="shot-club-row">${clubBtns}<\/div>
       ${carryLine}
-      <div class="field-label" style="margin-bottom:6px;margin-top:10px">Shape</div>
-      <div class="seg-ctrl" style="margin-bottom:10px">${shapeBtns}</div>
-      <div class="field-label" style="margin-bottom:6px">Outcome</div>
-      <div class="shot-outcome-row">${outBtns}</div>
-    </div>`;
+      <div class="field-label" style="margin-bottom:6px;margin-top:10px">Shape<\/div>
+      <div class="seg-ctrl" style="margin-bottom:10px">${shapeBtns}<\/div>
+      <div class="field-label" style="margin-bottom:6px">Outcome<\/div>
+      <div class="shot-outcome-row">${outBtns}<\/div>
+    <\/div>`;
   }).join('');
 }
 
@@ -4077,16 +4092,16 @@ function renderShotList() {
     const outcomeCls = badOutcomes.includes(s.outcome) ? 'bad'
       : goodOutcomes.includes(s.outcome) ? 'good' : 'neutral';
     const shapetag   = (s.shape && s.shape !== 'straight')
-      ? `<span class="recap-tag ${shapeCls}">${s.shape}</span>` : '';
+      ? `<span class="recap-tag ${shapeCls}">${s.shape}<\/span>` : '';
     const outcometag = s.outcome
-      ? `<span class="recap-tag ${outcomeCls}">${s.outcome}</span>` : '';
+      ? `<span class="recap-tag ${outcomeCls}">${s.outcome}<\/span>` : '';
 
     return `<div class="recap-row">
-      <span class="recap-num">${i + 1}</span>
-      <span class="recap-primary">${primary}</span>
-      <span class="recap-secondary">${secondary}</span>
-      <div class="recap-tags">${shapetag}${outcometag}</div>
-    </div>`;
+      <span class="recap-num">${i + 1}<\/span>
+      <span class="recap-primary">${primary}<\/span>
+      <span class="recap-secondary">${secondary}<\/span>
+      <div class="recap-tags">${shapetag}${outcometag}<\/div>
+    <\/div>`;
   }).join('');
 
   el.innerHTML = rows;
@@ -4115,7 +4130,7 @@ function renderScorecard() {
   if (actions) actions.style.display   = isActive ? 'block' : 'none';
 
   if (!course || !state.holeData || !state.holeData.some(h => h.score !== null)) {
-    body.innerHTML = '<tr><td colspan="8" style="opacity:0.4;text-align:center;padding:20px">No active round</td></tr>';
+    body.innerHTML = '<tr><td colspan="8" style="opacity:0.4;text-align:center;padding:20px">No active round<\/td><\/tr>';
     document.getElementById('sc-round-info').textContent = isActive ? `${state.currentRound?.course || ''} · in progress` : '';
     document.getElementById('round-summary-stats').innerHTML = '';
     return;
@@ -4137,36 +4152,36 @@ function renderScorecard() {
     const hd = state.holeData[i];
     const score = hd.score;
     const yds = hole.yards[teeIdx] || hole.yards[0];
-    if (score === null) return `<tr style="opacity:0.4"><td>${i+1}</td><td>${hole.par}</td><td>${yds}</td><td>${hole.hcp||'—'}</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>`;
+    if (score === null) return `<tr style="opacity:0.4"><td>${i+1}<\/td><td>${hole.par}<\/td><td>${yds}<\/td><td>${hole.hcp||'—'}<\/td><td>—<\/td><td>—<\/td><td>—<\/td><td>—<\/td><\/tr>`;
     totalScore += score; totalPar += hole.par; totalPutts += hd.putts; holesPlayed++;
     const rel = score - hole.par;
     const cls = rel <= -2 ? 'sc-eagle' : rel === -1 ? 'sc-birdie' : rel === 1 ? 'sc-bogey' : rel >= 2 ? 'sc-dbl' : '';
     const { fir: holeFIR, gir: holeGIR } = resolveHoleFIRGIR(hd, hole.par);
     return `<tr>
-      <td>${i+1}</td><td>${hole.par}</td><td>${yds}</td><td>${hole.hcp||'—'}</td>
-      <td><span class="sc-score ${cls}">${score}</span></td>
-      <td>${hd.putts}</td>
-      <td>${holeFIR === true ? '✓' : holeFIR === false ? '✗' : hole.par === 3 ? '—' : '·'}</td>
-      <td>${holeGIR ? '✓' : '·'}</td>
-    </tr>`;
+      <td>${i+1}<\/td><td>${hole.par}<\/td><td>${yds}<\/td><td>${hole.hcp||'—'}<\/td>
+      <td><span class="sc-score ${cls}">${score}<\/span><\/td>
+      <td>${hd.putts}<\/td>
+      <td>${holeFIR === true ? '✓' : holeFIR === false ? '✗' : hole.par === 3 ? '—' : '·'}<\/td>
+      <td>${holeGIR ? '✓' : '·'}<\/td>
+    <\/tr>`;
   }).join('');
 
   const rel = totalScore - totalPar;
   body.innerHTML = rows + `<tr class="sc-total-row">
-    <td>Total</td><td>${totalPar}</td><td></td><td></td>
-    <td>${totalScore} (${rel >= 0 ? '+' : ''}${rel})</td>
-    <td>${totalPutts}</td><td></td><td></td>
-  </tr>`;
+    <td>Total<\/td><td>${totalPar}<\/td><td><\/td><td><\/td>
+    <td>${totalScore} (${rel >= 0 ? '+' : ''}${rel})<\/td>
+    <td>${totalPutts}<\/td><td><\/td><td><\/td>
+  <\/tr>`;
 
   // Round summary card
   const avgPuttsPerHole = holesPlayed > 0 ? (totalPutts / holesPlayed).toFixed(2) : '—';
   document.getElementById('round-summary-stats').innerHTML = `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-      <div class="stat-box"><div class="stat-val">${holesPlayed}</div><div class="stat-lbl">Holes Played</div></div>
-      <div class="stat-box"><div class="stat-val" style="color:${rel<0?'var(--birdie)':rel>0?'var(--bogey)':'var(--white)'}">${rel>=0?'+':''}${rel}</div><div class="stat-lbl">To Par</div></div>
-      <div class="stat-box"><div class="stat-val">${totalPutts}</div><div class="stat-lbl">Total Putts</div></div>
-      <div class="stat-box"><div class="stat-val">${avgPuttsPerHole}</div><div class="stat-lbl">Putts/Hole</div></div>
-    </div>
+      <div class="stat-box"><div class="stat-val">${holesPlayed}<\/div><div class="stat-lbl">Holes Played<\/div><\/div>
+      <div class="stat-box"><div class="stat-val" style="color:${rel<0?'var(--birdie)':rel>0?'var(--bogey)':'var(--white)'}">${rel>=0?'+':''}${rel}<\/div><div class="stat-lbl">To Par<\/div><\/div>
+      <div class="stat-box"><div class="stat-val">${totalPutts}<\/div><div class="stat-lbl">Total Putts<\/div><\/div>
+      <div class="stat-box"><div class="stat-val">${avgPuttsPerHole}<\/div><div class="stat-lbl">Putts/Hole<\/div><\/div>
+    <\/div>
   `;
 }
 
@@ -4185,13 +4200,13 @@ function openEndRoundModal(mode) {
   // Build info block
   document.getElementById('end-round-modal-info').innerHTML = `
     <div style="display:flex;justify-content:space-between;margin-bottom:6px">
-      <span style="font-weight:600">${course}</span>
-      <span style="opacity:0.5">${tee} Tees</span>
-    </div>
+      <span style="font-weight:600">${course}<\/span>
+      <span style="opacity:0.5">${tee} Tees<\/span>
+    <\/div>
     <div style="display:flex;gap:20px">
-      <span>⛳ <strong>${holesPlayed}</strong> of ${totalHoles} holes played</span>
-      <span>📅 ${state.currentRound.date || 'Today'}</span>
-    </div>
+      <span>⛳ <strong>${holesPlayed}<\/strong> of ${totalHoles} holes played<\/span>
+      <span>📅 ${state.currentRound.date || 'Today'}<\/span>
+    <\/div>
   `;
 
   // If called from the cancel button, collapse the Save option
@@ -4394,7 +4409,7 @@ function renderScoringCategories(rounds) {
   const { counts, totalHoles, pct } = calcScoringCategories(rounds);
 
   if (totalHoles === 0) {
-    el.innerHTML = '<div style="opacity:0.4;text-align:center;padding:16px;font-size:13px">Log hole-by-hole scores to see scoring categories</div>';
+    el.innerHTML = '<div style="opacity:0.4;text-align:center;padding:16px;font-size:13px">Log hole-by-hole scores to see scoring categories<\/div>';
     return;
   }
 
@@ -4420,15 +4435,15 @@ function renderScoringCategories(rounds) {
       const barPct  = Math.round((c.count / maxCount) * 100);
       const holePct = pct(c.count);
       return `<div class="sc-cat-row sc-cat-${c.key}">
-        <span class="sc-cat-label">${c.label}</span>
+        <span class="sc-cat-label">${c.label}<\/span>
         <div class="sc-cat-bar-wrap">
-          <div class="sc-cat-bar" style="width:${barPct}%"></div>
-        </div>
+          <div class="sc-cat-bar" style="width:${barPct}%"><\/div>
+        <\/div>
         <div class="sc-cat-nums">
-          <span class="sc-cat-count">${c.count}</span>
-          <span class="sc-cat-pct">${holePct}%</span>
-        </div>
-      </div>`;
+          <span class="sc-cat-count">${c.count}<\/span>
+          <span class="sc-cat-pct">${holePct}%<\/span>
+        <\/div>
+      <\/div>`;
     }).join('');
 
   // Under-par summary
@@ -4437,10 +4452,10 @@ function renderScoringCategories(rounds) {
 
   el.innerHTML = rows + `
     <div class="sc-cat-total-row">
-      <span>${totalHoles.toLocaleString()} holes tracked</span>
-      <span style="color:var(--birdie)">▼ Under par: ${underPar} (${pct(underPar)}%)</span>
-      <span style="color:#e87070">▲ Over par: ${overPar} (${pct(overPar)}%)</span>
-    </div>`;
+      <span>${totalHoles.toLocaleString()} holes tracked<\/span>
+      <span style="color:var(--birdie)">▼ Under par: ${underPar} (${pct(underPar)}%)<\/span>
+      <span style="color:#e87070">▲ Over par: ${overPar} (${pct(overPar)}%)<\/span>
+    <\/div>`;
 }
 
 function setStatsPeriod(period, btn) {
@@ -4528,12 +4543,12 @@ function renderMiniBar(containerId, values, goodHigh) {
     const g = Math.round(160 * goodness + 60);
     const color = isLast ? 'var(--flag)' : `rgb(${r},${g},60)`;
     const opacity = isLast ? 1 : 0.6;
-    return `<div class="tmc-bar" style="height:${height}px;background:${color};opacity:${opacity}"></div>`;
+    return `<div class="tmc-bar" style="height:${height}px;background:${color};opacity:${opacity}"><\/div>`;
   }).join('');
 }
 
 function buildSparklineSVG(rounds) {
-  if (rounds.length < 2) return '<div style="opacity:0.3;text-align:center;font-size:13px;padding:20px 0">Need 2+ rounds for trend line</div>';
+  if (rounds.length < 2) return '<div style="opacity:0.3;text-align:center;font-size:13px;padding:20px 0">Need 2+ rounds for trend line<\/div>';
 
   const scores = rounds.map(r => r.toPar || 0).reverse(); // oldest→newest
   const dates  = rounds.map(r => r.date).reverse();
@@ -4565,8 +4580,8 @@ function buildSparklineSVG(rounds) {
     <circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${i === n-1 ? 5 : 3.5}"
       fill="${dotColors[i]}" stroke="rgba(0,0,0,0.4)" stroke-width="1"
       class="spark-dot">
-      <title>${p.date} · ${p.s >= 0 ? '+' : ''}${p.s}</title>
-    </circle>
+      <title>${p.date} · ${p.s >= 0 ? '+' : ''}${p.s}<\/title>
+    <\/circle>
   `).join('');
 
   // End labels
@@ -4579,17 +4594,17 @@ function buildSparklineSVG(rounds) {
         <linearGradient id="sparkFill" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stop-color="rgba(200,168,75,0.25)"/>
           <stop offset="100%" stop-color="rgba(200,168,75,0)"/>
-        </linearGradient>
-      </defs>
+        <\/linearGradient>
+      <\/defs>
       <line x1="${pad}" y1="${parLineY}" x2="${W-pad}" y2="${parLineY}" class="spark-ref-line"/>
-      <text x="${W-pad+3}" y="${parLineY+4}" class="spark-label">E</text>
+      <text x="${W-pad+3}" y="${parLineY+4}" class="spark-label">E<\/text>
       <path d="${fillD}" fill="url(#sparkFill)"/>
       <path d="${pathD}" fill="none" stroke="var(--flag)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
       ${dots}
-      <text x="${first.x}" y="${H}" class="spark-label" text-anchor="middle">${first.date?.slice(5) || ''}</text>
-      <text x="${last.x}" y="${H}" class="spark-label" text-anchor="middle">${last.date?.slice(5) || ''}</text>
-    </svg>
-  </div>`;
+      <text x="${first.x}" y="${H}" class="spark-label" text-anchor="middle">${first.date?.slice(5) || ''}<\/text>
+      <text x="${last.x}" y="${H}" class="spark-label" text-anchor="middle">${last.date?.slice(5) || ''}<\/text>
+    <\/svg>
+  <\/div>`;
 }
 
 /**
@@ -4631,7 +4646,7 @@ function renderStats() {
   document.getElementById('stats-hcp-display').textContent = hcp != null ? hcp.toFixed(1) : '—';
 
   if (rounds.length === 0) {
-    const empty = '<div style="opacity:0.4;text-align:center;padding:16px;font-size:13px">No rounds in this period</div>';
+    const empty = '<div style="opacity:0.4;text-align:center;padding:16px;font-size:13px">No rounds in this period<\/div>';
     ['score-sparkline','score-trend-stats','scoring-breakdown','scoring-breakdown-summary','scoring-categories','putting-stats','fg-stats'].forEach(id => {
       const el = document.getElementById(id); if (el) el.innerHTML = empty;
     });
@@ -4674,22 +4689,22 @@ function renderStats() {
   document.getElementById('score-trend-stats').innerHTML = `
     <div class="score-trend-row">
       <div class="stt-box">
-        <div class="stt-val" style="color:${avgToPar<0?'var(--birdie)':avgToPar>0?'var(--bogey)':'var(--white)'}">${avgToPar>=0?'+':''}${avgToPar.toFixed(1)}</div>
-        <div class="stt-lbl">Avg to Par</div>
-      </div>
+        <div class="stt-val" style="color:${avgToPar<0?'var(--birdie)':avgToPar>0?'var(--bogey)':'var(--white)'}">${avgToPar>=0?'+':''}${avgToPar.toFixed(1)}<\/div>
+        <div class="stt-lbl">Avg to Par<\/div>
+      <\/div>
       <div class="stt-box">
-        <div class="stt-val" style="color:var(--birdie)">${bestLabel}</div>
-        <div class="stt-lbl">Best</div>
-      </div>
+        <div class="stt-val" style="color:var(--birdie)">${bestLabel}<\/div>
+        <div class="stt-lbl">Best<\/div>
+      <\/div>
       <div class="stt-box">
-        <div class="stt-val" style="color:var(--bogey)">${worstLabel}</div>
-        <div class="stt-lbl">Worst</div>
-      </div>
+        <div class="stt-val" style="color:var(--bogey)">${worstLabel}<\/div>
+        <div class="stt-lbl">Worst<\/div>
+      <\/div>
       <div class="stt-box">
-        <div class="stt-val" style="color:var(--flag)">${avgDiff!=null?(avgDiff>=0?'+':'')+avgDiff.toFixed(1):'—'}</div>
-        <div class="stt-lbl">Avg Diff</div>
-      </div>
-    </div>`;
+        <div class="stt-val" style="color:var(--flag)">${avgDiff!=null?(avgDiff>=0?'+':'')+avgDiff.toFixed(1):'—'}<\/div>
+        <div class="stt-lbl">Avg Diff<\/div>
+      <\/div>
+    <\/div>`;
 
   // ── 4 Trend Metric Cards ─────────────────────────────────────────
 
@@ -4764,45 +4779,45 @@ function renderStats() {
   document.getElementById('scoring-breakdown-summary').innerHTML = `
     <div class="hcp-block" style="margin-bottom:0">
       <div class="hcp-block-left">
-        <div class="hcp-block-label">Handicap Index</div>
-        <div class="hcp-block-value">${hcp != null ? hcp.toFixed(1) : '—'}</div>
+        <div class="hcp-block-label">Handicap Index<\/div>
+        <div class="hcp-block-value">${hcp != null ? hcp.toFixed(1) : '—'}<\/div>
         <div class="hcp-block-sub">${roundsWithDiff.length < 3
           ? `${3 - roundsWithDiff.length} more round(s) to calculate`
-          : `From ${n} rounds · best ${numUsed} used`}${get9HolePendingMessage() ? ' · ⚠ 9-hole pending' : ''}</div>
-      </div>
+          : `From ${n} rounds · best ${numUsed} used`}${get9HolePendingMessage() ? ' · ⚠ 9-hole pending' : ''}<\/div>
+      <\/div>
       <div class="hcp-block-right" style="text-align:right">
-        <div style="font-size:13px;font-weight:600;line-height:1.4">${trendStr || '—'}</div>
-        ${indexMovementLabel ? `<div style="font-size:11px;opacity:0.55;margin-top:4px">${indexMovementLabel}</div>` : ''}
-      </div>
-    </div>
+        <div style="font-size:13px;font-weight:600;line-height:1.4">${trendStr || '—'}<\/div>
+        ${indexMovementLabel ? `<div style="font-size:11px;opacity:0.55;margin-top:4px">${indexMovementLabel}<\/div>` : ''}
+      <\/div>
+    <\/div>
     ${roundsWithDiff.length >= 2 ? `
     <div style="margin-top:12px;background:rgba(255,255,255,0.04);border-radius:10px;padding:10px 14px;font-size:12px;line-height:1.7;opacity:0.7">
-      📉 <strong style="opacity:1">Improving</strong> = recent diffs lower (scoring better vs course rating).<br>
-      📈 <strong style="opacity:1">Rising</strong> = recent diffs higher (index going up).<br>
-      <em>Lower differential = better round. Lower index = better golfer.</em>
-    </div>` : ''}
+      📉 <strong style="opacity:1">Improving<\/strong> = recent diffs lower (scoring better vs course rating).<br>
+      📈 <strong style="opacity:1">Rising<\/strong> = recent diffs higher (index going up).<br>
+      <em>Lower differential = better round. Lower index = better golfer.<\/em>
+    <\/div>` : ''}
   `;
 
   // ── Handicap & Scoring — Details (expandable) ─────────────────────
   document.getElementById('scoring-breakdown').innerHTML = `
-    <div style="height:1px;background:var(--border);margin:12px 0"></div>
-    <div class="trend-bar-wrap"><div class="trend-bar-label"><span>Rounds (this period)</span><span>${rounds.length}</span></div></div>
-    <div class="trend-bar-wrap"><div class="trend-bar-label"><span>All-time rounds</span><span>${allRounds.length}</span></div></div>
-    <div class="trend-bar-wrap"><div class="trend-bar-label"><span>Scoring avg (18-hole equiv)</span><span>${avgPeriod!=null?avgPeriod.toFixed(1):'—'}</span></div></div>
-    <div class="trend-bar-wrap"><div class="trend-bar-label"><span>Best (18-hole equiv)</span><span>${rounds.length?Math.min(...rounds.map(r=>normalizeRoundScore(r).score18)).toFixed(0):'—'}</span></div></div>
-    <div class="trend-bar-wrap"><div class="trend-bar-label"><span>Worst (18-hole equiv)</span><span>${rounds.length?Math.max(...rounds.map(r=>normalizeRoundScore(r).score18)).toFixed(0):'—'}</span></div></div>
+    <div style="height:1px;background:var(--border);margin:12px 0"><\/div>
+    <div class="trend-bar-wrap"><div class="trend-bar-label"><span>Rounds (this period)<\/span><span>${rounds.length}<\/span><\/div><\/div>
+    <div class="trend-bar-wrap"><div class="trend-bar-label"><span>All-time rounds<\/span><span>${allRounds.length}<\/span><\/div><\/div>
+    <div class="trend-bar-wrap"><div class="trend-bar-label"><span>Scoring avg (18-hole equiv)<\/span><span>${avgPeriod!=null?avgPeriod.toFixed(1):'—'}<\/span><\/div><\/div>
+    <div class="trend-bar-wrap"><div class="trend-bar-label"><span>Best (18-hole equiv)<\/span><span>${rounds.length?Math.min(...rounds.map(r=>normalizeRoundScore(r).score18)).toFixed(0):'—'}<\/span><\/div><\/div>
+    <div class="trend-bar-wrap"><div class="trend-bar-label"><span>Worst (18-hole equiv)<\/span><span>${rounds.length?Math.max(...rounds.map(r=>normalizeRoundScore(r).score18)).toFixed(0):'—'}<\/span><\/div><\/div>
     ${roundsWithDiff.length > 0 ? `
     <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
-      <div class="field-label" style="margin-bottom:8px">Score Differentials — newest first${numUsed ? ` (★ = counting toward index)` : ''}</div>
+      <div class="field-label" style="margin-bottom:8px">Score Differentials — newest first${numUsed ? ` (★ = counting toward index)` : ''}<\/div>
       ${roundsWithDiff.slice(0,10).map((r, i) => {
         const isUsed = bestDiffs.includes(r);
         const isNewest = i === 0;
         return `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)">
-          <span style="font-size:12px;opacity:${isNewest?0.9:0.6}">${r.course.split(' ').slice(0,2).join(' ')} · ${r.date}${isNewest?' <span style="color:var(--flag);font-size:10px">latest</span>':''}</span>
-          <span class="diff-badge ${isUsed ? 'diff-used' : 'diff-unused'}">${r.differential >= 0 ? '+' : ''}${r.differential.toFixed(1)}${isUsed ? ' ★' : ''}</span>
-        </div>`;
+          <span style="font-size:12px;opacity:${isNewest?0.9:0.6}">${r.course.split(' ').slice(0,2).join(' ')} · ${r.date}${isNewest?' <span style="color:var(--flag);font-size:10px">latest<\/span>':''}<\/span>
+          <span class="diff-badge ${isUsed ? 'diff-used' : 'diff-unused'}">${r.differential >= 0 ? '+' : ''}${r.differential.toFixed(1)}${isUsed ? ' ★' : ''}<\/span>
+        <\/div>`;
       }).join('')}
-    </div>` : ''}
+    <\/div>` : ''}
   `;
 
   // Restore expand/collapse state (period changes re-render but should preserve open state)
@@ -4832,58 +4847,58 @@ function renderStats() {
   const lagRateColor = avgLagPct == null ? 'var(--white)' : avgLagPct >= 75 ? '#6dd46d' : avgLagPct >= 50 ? '#7ec8ff' : '#e87070';
 
   document.getElementById('putting-stats').innerHTML = `
-    <div class="trend-bar-wrap"><div class="trend-bar-label"><span>Avg putts / round</span><span>${avgPutts!=null?avgPutts.toFixed(1):'—'}</span></div></div>
-    <div class="trend-bar-wrap"><div class="trend-bar-label"><span>Avg putts / hole</span><span>${puttAvgPerHole}</span></div></div>
-    ${best3Putts!=null?`<div class="trend-bar-wrap"><div class="trend-bar-label"><span>Best putting round</span><span>${best3Putts}</span></div></div>`:''}
-    ${puttDelta!=null?`<div class="trend-bar-wrap"><div class="trend-bar-label"><span>Trend vs prior half</span><span style="color:${puttDelta<0?'#6dd46d':puttDelta>0?'#e87070':'rgba(255,255,255,0.5)'}">
-      ${puttDelta<0?'▼ Improving':'▲ More putts'} (${Math.abs(puttDelta).toFixed(1)})</span></div></div>`:''}
+    <div class="trend-bar-wrap"><div class="trend-bar-label"><span>Avg putts / round<\/span><span>${avgPutts!=null?avgPutts.toFixed(1):'—'}<\/span><\/div><\/div>
+    <div class="trend-bar-wrap"><div class="trend-bar-label"><span>Avg putts / hole<\/span><span>${puttAvgPerHole}<\/span><\/div><\/div>
+    ${best3Putts!=null?`<div class="trend-bar-wrap"><div class="trend-bar-label"><span>Best putting round<\/span><span>${best3Putts}<\/span><\/div><\/div>`:''}
+    ${puttDelta!=null?`<div class="trend-bar-wrap"><div class="trend-bar-label"><span>Trend vs prior half<\/span><span style="color:${puttDelta<0?'#6dd46d':puttDelta>0?'#e87070':'rgba(255,255,255,0.5)'}">
+      ${puttDelta<0?'▼ Improving':'▲ More putts'} (${Math.abs(puttDelta).toFixed(1)})<\/span><\/div><\/div>`:''}
     <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
       <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;margin-bottom:10px">
-        🎯 Lag Putting <span style="font-size:10px;opacity:0.6;text-transform:none;letter-spacing:0">(>${LAG_MIN_DIST}ft approach → ≤${LAG_NEXT_MAX}ft follow-up = success)</span>
-      </div>
+        🎯 Lag Putting <span style="font-size:10px;opacity:0.6;text-transform:none;letter-spacing:0">(>${LAG_MIN_DIST}ft approach → ≤${LAG_NEXT_MAX}ft follow-up = success)<\/span>
+      <\/div>
       ${totalLagAttempts > 0 ? `
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
         <div class="stat-box">
-          <div class="stat-val" style="color:${lagRateColor}">${avgLagPct != null ? avgLagPct+'%' : '—'}</div>
-          <div class="stat-lbl">Success Rate</div>
-        </div>
+          <div class="stat-val" style="color:${lagRateColor}">${avgLagPct != null ? avgLagPct+'%' : '—'}<\/div>
+          <div class="stat-lbl">Success Rate<\/div>
+        <\/div>
         <div class="stat-box">
-          <div class="stat-val" style="color:#7ec8ff">${avgLagPerRound || '—'}</div>
-          <div class="stat-lbl">Per Round</div>
-        </div>
-      </div>
-      <div class="trend-bar-wrap"><div class="trend-bar-label"><span>Total lag attempts</span><span>${totalLagAttempts}</span></div></div>
+          <div class="stat-val" style="color:#7ec8ff">${avgLagPerRound || '—'}<\/div>
+          <div class="stat-lbl">Per Round<\/div>
+        <\/div>
+      <\/div>
+      <div class="trend-bar-wrap"><div class="trend-bar-label"><span>Total lag attempts<\/span><span>${totalLagAttempts}<\/span><\/div><\/div>
       <div class="trend-bar-wrap"><div class="trend-bar-label">
-        <span>✓ Successful lags</span>
-        <span style="color:#6dd46d">${totalLagSuccesses}</span>
-      </div></div>
+        <span>✓ Successful lags<\/span>
+        <span style="color:#6dd46d">${totalLagSuccesses}<\/span>
+      <\/div><\/div>
       <div class="trend-bar-wrap"><div class="trend-bar-label">
-        <span>⚠ Missed lags <span style="opacity:0.5;font-size:11px">(follow-up >${LAG_NEXT_MAX}ft)</span></span>
-        <span style="color:#e87070">${totalLagMisses}</span>
-      </div></div>
-      ${lagTrendLabel ? `<div class="trend-bar-wrap"><div class="trend-bar-label"><span>Lag rate trend</span><span style="color:${lagTrendColor}">${lagTrendLabel}</span></div></div>` : ''}
+        <span>⚠ Missed lags <span style="opacity:0.5;font-size:11px">(follow-up >${LAG_NEXT_MAX}ft)<\/span><\/span>
+        <span style="color:#e87070">${totalLagMisses}<\/span>
+      <\/div><\/div>
+      ${lagTrendLabel ? `<div class="trend-bar-wrap"><div class="trend-bar-label"><span>Lag rate trend<\/span><span style="color:${lagTrendColor}">${lagTrendLabel}<\/span><\/div><\/div>` : ''}
       ` : `<div style="opacity:0.4;font-size:12px;text-align:center;line-height:1.5;padding:4px 0">
         Log putt distances via Putt Details during a round<br>to unlock lag putting stats here
-      </div>`}
-    </div>
+      <\/div>`}
+    <\/div>
   `;
 
   // ── FIR / GIR detail ─────────────────────────────────────────────
   const firRows = firRounds.slice(0,5).map(r =>
     `<div class="trend-bar-wrap"><div class="trend-bar-label">
-      <span>${r.course.split(' ').slice(0,2).join(' ')} · ${r.date}</span>
-      <span>FW ${r.fw||'—'} · GIR ${r.gir||'—'}</span>
-    </div></div>`
+      <span>${r.course.split(' ').slice(0,2).join(' ')} · ${r.date}<\/span>
+      <span>FW ${r.fw||'—'} · GIR ${r.gir||'—'}<\/span>
+    <\/div><\/div>`
   ).join('');
   const noFG = firRounds.length === 0 && girRounds.length === 0;
   document.getElementById('fg-stats').innerHTML = noFG
-    ? '<div style="opacity:0.4;font-size:13px;padding:8px 0">Track fairways and GIR during rounds to see stats here</div>'
+    ? '<div style="opacity:0.4;font-size:13px;padding:8px 0">Track fairways and GIR during rounds to see stats here<\/div>'
     : `
-      ${avgFIR!=null?`<div class="trend-bar-wrap"><div class="trend-bar-label"><span>Avg FIR %</span><span>${(avgFIR*100).toFixed(0)}%</span></div></div>`:''}
-      ${avgGIR!=null?`<div class="trend-bar-wrap"><div class="trend-bar-label"><span>Avg GIR %</span><span>${(avgGIR*100).toFixed(0)}%</span></div></div>`:''}
-      ${firDelta!=null?`<div class="trend-bar-wrap"><div class="trend-bar-label"><span>FIR trend vs prior half</span><span style="color:${firDelta>0?'#6dd46d':firDelta<0?'#e87070':'rgba(255,255,255,0.5)'}">${firDelta>0?'▲ More FIR':'▼ Fewer FIR'} (${(Math.abs(firDelta)*100).toFixed(1)}%)</span></div></div>`:''}
-      ${girDelta!=null?`<div class="trend-bar-wrap"><div class="trend-bar-label"><span>GIR trend vs prior half</span><span style="color:${girDelta>0?'#6dd46d':girDelta<0?'#e87070':'rgba(255,255,255,0.5)'}">${girDelta>0?'▲ More GIR':'▼ Fewer GIR'} (${(Math.abs(girDelta)*100).toFixed(1)}%)</span></div></div>`:''}
-      <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">${firRows}</div>
+      ${avgFIR!=null?`<div class="trend-bar-wrap"><div class="trend-bar-label"><span>Avg FIR %<\/span><span>${(avgFIR*100).toFixed(0)}%<\/span><\/div><\/div>`:''}
+      ${avgGIR!=null?`<div class="trend-bar-wrap"><div class="trend-bar-label"><span>Avg GIR %<\/span><span>${(avgGIR*100).toFixed(0)}%<\/span><\/div><\/div>`:''}
+      ${firDelta!=null?`<div class="trend-bar-wrap"><div class="trend-bar-label"><span>FIR trend vs prior half<\/span><span style="color:${firDelta>0?'#6dd46d':firDelta<0?'#e87070':'rgba(255,255,255,0.5)'}">${firDelta>0?'▲ More FIR':'▼ Fewer FIR'} (${(Math.abs(firDelta)*100).toFixed(1)}%)<\/span><\/div><\/div>`:''}
+      ${girDelta!=null?`<div class="trend-bar-wrap"><div class="trend-bar-label"><span>GIR trend vs prior half<\/span><span style="color:${girDelta>0?'#6dd46d':girDelta<0?'#e87070':'rgba(255,255,255,0.5)'}">${girDelta>0?'▲ More GIR':'▼ Fewer GIR'} (${(Math.abs(girDelta)*100).toFixed(1)}%)<\/span><\/div><\/div>`:''}
+      <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">${firRows}<\/div>
     `;
 
   // ── Scoring Categories ────────────────────────────────────────────
@@ -4897,7 +4912,7 @@ function renderAllRoundsList(rounds) {
   const allRoundsEl = document.getElementById('all-rounds-list');
   if (!allRoundsEl) return;
   if (rounds.length === 0) {
-    allRoundsEl.innerHTML = '<div style="opacity:0.4;text-align:center;padding:16px;font-size:13px">No rounds yet. Add a previous round or start playing!</div>';
+    allRoundsEl.innerHTML = '<div style="opacity:0.4;text-align:center;padding:16px;font-size:13px">No rounds yet. Add a previous round or start playing!<\/div>';
     return;
   }
   allRoundsEl.innerHTML = rounds.map((r) => {
@@ -4910,24 +4925,24 @@ function renderAllRoundsList(rounds) {
     const diffStr = r.differential != null ? `${r.differential>=0?'+':''}${r.differential.toFixed(1)}` : '—';
     const safeId = r.id.replace(/[^a-zA-Z0-9_]/g, '_');
     return `<div class="rh-row" id="rh-${safeId}">
-      <div class="rh-score ${rel<0?'under':rel>0?'over':''}">${r.total}</div>
+      <div class="rh-score ${rel<0?'under':rel>0?'over':''}">${r.total}<\/div>
       <div class="rh-info">
-        <div class="rh-course">${r.course}${is9h ? ' <span style="font-size:10px;opacity:0.5;font-weight:400">9-hole</span>' : ''}</div>
-        <div class="rh-meta">${r.date} · ${r.tee||''} · Par ${r.totalPar||'—'} · ${rel>=0?'+':''}${rel}</div>
-      </div>
+        <div class="rh-course">${r.course}${is9h ? ' <span style="font-size:10px;opacity:0.5;font-weight:400">9-hole<\/span>' : ''}<\/div>
+        <div class="rh-meta">${r.date} · ${r.tee||''} · Par ${r.totalPar||'—'} · ${rel>=0?'+':''}${rel}<\/div>
+      <\/div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;margin-right:8px">
-        ${r.differential!=null?`<span class="rh-diff">${diffStr}</span>`:''}
-        ${r.previousRound?'<span class="rh-badge">Manual</span>':''}
-        ${r.partial?'<span class="rh-badge" style="background:rgba(230,126,34,0.2);color:var(--bogey);border-color:rgba(230,126,34,0.3)">Partial</span>':''}
-      </div>
-      <button class="rh-del" onclick="confirmDeleteRound('${r.id}', this)" title="Tap to delete">×</button>
-    </div>`;
+        ${r.differential!=null?`<span class="rh-diff">${diffStr}<\/span>`:''}
+        ${r.previousRound?'<span class="rh-badge">Manual<\/span>':''}
+        ${r.partial?'<span class="rh-badge" style="background:rgba(230,126,34,0.2);color:var(--bogey);border-color:rgba(230,126,34,0.3)">Partial<\/span>':''}
+      <\/div>
+      <button class="rh-del" onclick="confirmDeleteRound('${r.id}', this)" title="Tap to delete">×<\/button>
+    <\/div>`;
   }).join('');
 }
 
 // ===== PROFILE =====
 function loadProfileForm() {
-  const p = state.profile;
+  const p = state.profile || {};
   document.getElementById('pf-name').value = p.name || '';
   document.getElementById('pf-hcp').value = p.hcp || '';
   // Handedness
@@ -5098,15 +5113,15 @@ function renderHandicapHistory() {
   });
   document.getElementById('hcp-history-list').innerHTML = rows.slice(0,10).map(({ r, idx, change, isUsed }) =>
     `<div class="hcp-history-row">
-      <div class="hcp-hist-index">${idx != null ? idx.toFixed(1) : '—'}</div>
+      <div class="hcp-hist-index">${idx != null ? idx.toFixed(1) : '—'}<\/div>
       <div class="hcp-hist-info">
-        <div class="hcp-hist-course">${r.course}</div>
-        <div class="hcp-hist-date">${r.date} · ${r.tee} · ${r.total} (${r.toPar>=0?'+':''}${r.toPar})</div>
-      </div>
-      <span class="diff-badge ${isUsed?'diff-used':'diff-unused'}" style="margin-right:6px">${r.differential>=0?'+':''}${r.differential.toFixed(1)}${isUsed?' ★':''}</span>
-      ${change!=null?`<div class="hcp-hist-change ${change<0?'down':'up'}">${change>0?'▲':'▼'}${Math.abs(change).toFixed(1)}</div>`:'<div class="hcp-hist-change" style="opacity:0.3">—</div>'}
-    </div>`
-  ).join('') || '<div style="opacity:0.4;font-size:13px;padding:8px 0">Complete 3 rounds to see history</div>';
+        <div class="hcp-hist-course">${r.course}<\/div>
+        <div class="hcp-hist-date">${r.date} · ${r.tee} · ${r.total} (${r.toPar>=0?'+':''}${r.toPar})<\/div>
+      <\/div>
+      <span class="diff-badge ${isUsed?'diff-used':'diff-unused'}" style="margin-right:6px">${r.differential>=0?'+':''}${r.differential.toFixed(1)}${isUsed?' ★':''}<\/span>
+      ${change!=null?`<div class="hcp-hist-change ${change<0?'down':'up'}">${change>0?'▲':'▼'}${Math.abs(change).toFixed(1)}<\/div>`:'<div class="hcp-hist-change" style="opacity:0.3">—<\/div>'}
+    <\/div>`
+  ).join('') || '<div style="opacity:0.4;font-size:13px;padding:8px 0">Complete 3 rounds to see history<\/div>';
 }
 
 function updateProfilePreview() {
@@ -5148,11 +5163,11 @@ function showRoundSummaryBanner(round, newIdx, prevIdx) {
   let hcpHTML = '';
   if (newIdx !== null) {
     const changed = prevIdx != null ? newIdx - prevIdx : null;
-    const changeStr = changed != null ? `<span style="color:${changed<0?'#6dd46d':'#e87070'};font-weight:700;margin-left:8px">${changed>0?'▲':'▼'}${Math.abs(changed).toFixed(1)}</span>` : '';
+    const changeStr = changed != null ? `<span style="color:${changed<0?'#6dd46d':'#e87070'};font-weight:700;margin-left:8px">${changed>0?'▲':'▼'}${Math.abs(changed).toFixed(1)}<\/span>` : '';
     hcpHTML = `<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.1);display:flex;justify-content:space-between;align-items:center">
-      <span style="font-size:13px;opacity:0.6">New Handicap Index</span>
-      <span style="font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--flag)">${newIdx.toFixed(1)}${changeStr}</span>
-    </div>`;
+      <span style="font-size:13px;opacity:0.6">New Handicap Index<\/span>
+      <span style="font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--flag)">${newIdx.toFixed(1)}${changeStr}<\/span>
+    <\/div>`;
   }
   const banner = document.createElement('div');
   banner.id = 'round-summary-banner';
@@ -5160,25 +5175,25 @@ function showRoundSummaryBanner(round, newIdx, prevIdx) {
   banner.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
       <div>
-        <div style="font-size:11px;opacity:0.5;text-transform:uppercase;letter-spacing:1px">Round Complete 🏆</div>
-        <div style="font-weight:600;font-size:14px;margin-top:2px">${round.course} · ${round.tee} Tees</div>
-      </div>
-      <button onclick="this.parentElement.parentElement.remove()" style="background:none;border:none;color:rgba(255,255,255,0.4);font-size:22px;cursor:pointer">×</button>
-    </div>
+        <div style="font-size:11px;opacity:0.5;text-transform:uppercase;letter-spacing:1px">Round Complete 🏆<\/div>
+        <div style="font-weight:600;font-size:14px;margin-top:2px">${round.course} · ${round.tee} Tees<\/div>
+      <\/div>
+      <button onclick="this.parentElement.parentElement.remove()" style="background:none;border:none;color:rgba(255,255,255,0.4);font-size:22px;cursor:pointer">×<\/button>
+    <\/div>
     <div style="display:flex;gap:16px">
       <div style="text-align:center;flex:1">
-        <div style="font-family:'Playfair Display',serif;font-size:30px;font-weight:900;color:${relColor}">${round.total}</div>
-        <div style="font-size:11px;opacity:0.5">Score (${rel})</div>
-      </div>
+        <div style="font-family:'Playfair Display',serif;font-size:30px;font-weight:900;color:${relColor}">${round.total}<\/div>
+        <div style="font-size:11px;opacity:0.5">Score (${rel})<\/div>
+      <\/div>
       <div style="text-align:center;flex:1">
-        <div style="font-family:'Playfair Display',serif;font-size:30px;font-weight:900;color:var(--flag)">${round.differential>=0?'+':''}${round.differential.toFixed(1)}</div>
-        <div style="font-size:11px;opacity:0.5">Differential</div>
-      </div>
+        <div style="font-family:'Playfair Display',serif;font-size:30px;font-weight:900;color:var(--flag)">${round.differential>=0?'+':''}${round.differential.toFixed(1)}<\/div>
+        <div style="font-size:11px;opacity:0.5">Differential<\/div>
+      <\/div>
       <div style="text-align:center;flex:1">
-        <div style="font-family:'Playfair Display',serif;font-size:30px;font-weight:900">${round.putts}</div>
-        <div style="font-size:11px;opacity:0.5">Putts</div>
-      </div>
-    </div>
+        <div style="font-family:'Playfair Display',serif;font-size:30px;font-weight:900">${round.putts}<\/div>
+        <div style="font-size:11px;opacity:0.5">Putts<\/div>
+      <\/div>
+    <\/div>
     ${hcpHTML}
   `;
   document.body.appendChild(banner);
@@ -5186,7 +5201,7 @@ function showRoundSummaryBanner(round, newIdx, prevIdx) {
 }
 
 function renderHome() {
-  const p = state.profile;
+  const p = state.profile || {};
   document.getElementById('hero-name').textContent = p.name?.split(' ')[0] || 'Golfer';
   const displayHcp = getDisplayHandicap();
   document.getElementById('hero-hcp').textContent = displayHcp != null ? displayHcp.toFixed(1) : '—';
@@ -5203,7 +5218,7 @@ function renderHome() {
 
   const listEl = document.getElementById('recent-rounds-list');
   if (rounds.length === 0) {
-    listEl.innerHTML = '<div style="opacity:0.4;text-align:center;padding:20px;font-size:14px">No rounds yet. Hit the course!</div>';
+    listEl.innerHTML = '<div style="opacity:0.4;text-align:center;padding:20px;font-size:14px">No rounds yet. Hit the course!<\/div>';
     return;
   }
   listEl.innerHTML = rounds.slice(0,5).map(r => {
@@ -5211,14 +5226,14 @@ function renderHome() {
     const is9h = isNineHoleRound(r);
     const diffStr = r.differential != null ? ` · Diff: ${r.differential>=0?'+':''}${r.differential.toFixed(1)}` : '';
     return `<div class="round-item">
-      <div class="round-score ${rel<0?'under':rel>0?'over':''}">${r.total}</div>
+      <div class="round-score ${rel<0?'under':rel>0?'over':''}">${r.total}<\/div>
       <div class="round-info">
-        <div class="round-course">${r.course}${is9h ? ' <span style="font-size:10px;opacity:0.45;font-weight:400">9h</span>' : ''}</div>
-        <div class="round-date">${r.date} · ${r.tee} Tees · Par ${r.totalPar||'—'}</div>
-        <div class="round-diff">${r.courseRating||''}${r.slope?' / Slope '+r.slope:''}${diffStr}</div>
-      </div>
-      <span class="round-chip">${rel>=0?'+':''}${rel}</span>
-    </div>`;
+        <div class="round-course">${r.course}${is9h ? ' <span style="font-size:10px;opacity:0.45;font-weight:400">9h<\/span>' : ''}<\/div>
+        <div class="round-date">${r.date} · ${r.tee} Tees · Par ${r.totalPar||'—'}<\/div>
+        <div class="round-diff">${r.courseRating||''}${r.slope?' / Slope '+r.slope:''}${diffStr}<\/div>
+      <\/div>
+      <span class="round-chip">${rel>=0?'+':''}${rel}<\/span>
+    <\/div>`;
   }).join('');
 }
 
@@ -5255,7 +5270,7 @@ function renderClubWizardStep() {
 function renderClubTypePicker() {
   const el = document.getElementById('club-type-picker');
   el.innerHTML = CLUB_TYPES.map(t => `
-    <button class="tog ${clubWizardData.type === t ? 'on' : ''}" onclick="selectClubType('${t}')">${t}</button>
+    <button class="tog ${clubWizardData.type === t ? 'on' : ''}" onclick="selectClubType('${t}')">${t}<\/button>
   `).join('');
 }
 
@@ -5271,32 +5286,32 @@ function renderBrandPicker() {
   if (clubWizardData.manualBrand) {
     el.innerHTML = `
       <div style="background:rgba(200,168,75,0.1);border:1px solid rgba(200,168,75,0.3);border-radius:12px;padding:14px;margin-bottom:10px">
-        <div style="font-size:12px;opacity:0.6;margin-bottom:10px">Enter brand and model manually:</div>
+        <div style="font-size:12px;opacity:0.6;margin-bottom:10px">Enter brand and model manually:<\/div>
         <div class="form-field" style="margin-bottom:8px">
-          <label class="field-label">Brand Name</label>
+          <label class="field-label">Brand Name<\/label>
           <input class="field-input" id="manual-brand-input" placeholder="e.g. Mizuno, Ben Hogan, Cobra" value="${clubWizardData.brandName||''}">
-        </div>
+        <\/div>
         <div class="form-field" style="margin-bottom:0">
-          <label class="field-label">Model Name</label>
+          <label class="field-label">Model Name<\/label>
           <input class="field-input" id="manual-model-input" placeholder="e.g. JPX 923 Forged" value="${clubWizardData.model||''}">
-        </div>
-      </div>
-      <button onclick="cancelManualBrand()" style="width:100%;background:none;border:none;color:rgba(255,255,255,0.35);font-size:12px;cursor:pointer;padding:6px;text-decoration:underline;text-underline-offset:3px">← Back to brand list</button>`;
+        <\/div>
+      <\/div>
+      <button onclick="cancelManualBrand()" style="width:100%;background:none;border:none;color:rgba(255,255,255,0.35);font-size:12px;cursor:pointer;padding:6px;text-decoration:underline;text-underline-offset:3px">← Back to brand list<\/button>`;
     return;
   }
 
   el.innerHTML = MANUFACTURERS.map(m => `
     <div class="brand-card ${clubWizardData.brandId === m.id ? 'selected' : ''}" onclick="selectBrand('${m.id}','${m.name}')">
-      <div class="brand-logo" style="background:${m.color};color:${m.textColor}">${m.abbr}</div>
+      <div class="brand-logo" style="background:${m.color};color:${m.textColor}">${m.abbr}<\/div>
       <div>
-        <div class="brand-name">${m.name}</div>
-        <div class="brand-tagline">${m.tagline}</div>
-      </div>
-      ${clubWizardData.brandId === m.id ? '<span style="color:var(--flag);font-size:20px">✓</span>' : ''}
-    </div>
+        <div class="brand-name">${m.name}<\/div>
+        <div class="brand-tagline">${m.tagline}<\/div>
+      <\/div>
+      ${clubWizardData.brandId === m.id ? '<span style="color:var(--flag);font-size:20px">✓<\/span>' : ''}
+    <\/div>
   `).join('') + `
-  <div class="gk-divider" style="margin:14px 0 10px"><span>Brand not listed?</span></div>
-  <button onclick="enterManualBrand()" style="width:100%;background:rgba(255,255,255,0.05);border:1.5px dashed rgba(255,255,255,0.2);border-radius:12px;color:rgba(255,255,255,0.55);font-family:'DM Sans',sans-serif;font-size:13px;padding:12px;cursor:pointer">+ Enter brand & model manually</button>`;
+  <div class="gk-divider" style="margin:14px 0 10px"><span>Brand not listed?<\/span><\/div>
+  <button onclick="enterManualBrand()" style="width:100%;background:rgba(255,255,255,0.05);border:1.5px dashed rgba(255,255,255,0.2);border-radius:12px;color:rgba(255,255,255,0.55);font-family:'DM Sans',sans-serif;font-size:13px;padding:12px;cursor:pointer">+ Enter brand & model manually<\/button>`;
 }
 
 function selectBrand(id, name) {
@@ -5325,10 +5340,10 @@ function renderModelPicker() {
   if (clubWizardData.manualModel || models.length === 0) {
     el.innerHTML = `
       <div style="background:rgba(200,168,75,0.1);border:1px solid rgba(200,168,75,0.3);border-radius:12px;padding:14px;margin-bottom:10px">
-        <div style="font-size:12px;opacity:0.6;margin-bottom:8px">Enter the model name:</div>
+        <div style="font-size:12px;opacity:0.6;margin-bottom:8px">Enter the model name:<\/div>
         <input class="field-input" id="manual-model-only-input" placeholder="e.g. i525, Apex Pro, ST-Z 230" value="${clubWizardData.model||''}">
-      </div>
-      ${models.length > 0 ? `<button onclick="cancelManualModel()" style="width:100%;background:none;border:none;color:rgba(255,255,255,0.35);font-size:12px;cursor:pointer;padding:6px;text-decoration:underline;text-underline-offset:3px">← Back to model list</button>` : ''}`;
+      <\/div>
+      ${models.length > 0 ? `<button onclick="cancelManualModel()" style="width:100%;background:none;border:none;color:rgba(255,255,255,0.35);font-size:12px;cursor:pointer;padding:6px;text-decoration:underline;text-underline-offset:3px">← Back to model list<\/button>` : ''}`;
     return;
   }
 
@@ -5336,14 +5351,14 @@ function renderModelPicker() {
     const desc = MODEL_DESCRIPTIONS[m] || '';
     return `<div class="model-card ${clubWizardData.model === m ? 'selected' : ''}" onclick="selectModel('${m.replace(/'/g,"\\'")}')">
       <div>
-        <div class="model-name">${m}</div>
-        ${desc ? `<div class="model-desc">${desc}</div>` : ''}
-      </div>
-      <div class="model-check">${clubWizardData.model === m ? '✓' : ''}</div>
-    </div>`;
+        <div class="model-name">${m}<\/div>
+        ${desc ? `<div class="model-desc">${desc}<\/div>` : ''}
+      <\/div>
+      <div class="model-check">${clubWizardData.model === m ? '✓' : ''}<\/div>
+    <\/div>`;
   }).join('') + `
-  <div class="gk-divider" style="margin:14px 0 10px"><span>Model not listed?</span></div>
-  <button onclick="enterManualModel()" style="width:100%;background:rgba(255,255,255,0.05);border:1.5px dashed rgba(255,255,255,0.2);border-radius:12px;color:rgba(255,255,255,0.55);font-family:'DM Sans',sans-serif;font-size:13px;padding:12px;cursor:pointer">+ Enter model manually</button>`;
+  <div class="gk-divider" style="margin:14px 0 10px"><span>Model not listed?<\/span><\/div>
+  <button onclick="enterManualModel()" style="width:100%;background:rgba(255,255,255,0.05);border:1.5px dashed rgba(255,255,255,0.2);border-radius:12px;color:rgba(255,255,255,0.55);font-family:'DM Sans',sans-serif;font-size:13px;padding:12px;cursor:pointer">+ Enter model manually<\/button>`;
 }
 
 function selectModel(model) {
@@ -5365,11 +5380,11 @@ function renderDistanceStep() {
 
   const icon = CLUB_ICONS[clubWizardData.type] || '⛳';
   document.getElementById('club-summary-card').innerHTML = `
-    <div class="club-summary-icon">${icon}</div>
+    <div class="club-summary-icon">${icon}<\/div>
     <div>
-      <div class="club-summary-name">${clubWizardData.brandName} ${clubWizardData.model}</div>
-      <div class="club-summary-sub">${clubWizardData.type}</div>
-    </div>
+      <div class="club-summary-name">${clubWizardData.brandName} ${clubWizardData.model}<\/div>
+      <div class="club-summary-sub">${clubWizardData.type}<\/div>
+    <\/div>
   `;
 }
 
@@ -5534,7 +5549,7 @@ function renderClubList() {
   const clubStats = calcClubStats();
 
   if (clubs.length === 0) {
-    el.innerHTML = '<div style="opacity:0.4;font-size:13px;text-align:center;padding:16px 0">No clubs added yet. Build your bag!</div>';
+    el.innerHTML = '<div style="opacity:0.4;font-size:13px;text-align:center;padding:16px 0">No clubs added yet. Build your bag!<\/div>';
     return;
   }
 
@@ -5555,42 +5570,42 @@ function renderClubList() {
       statHTML = `
         <div class="club-stat-row">
           <div class="club-stat-box">
-            <div class="club-stat-val">${st.avg}y</div>
-            <div class="club-stat-lbl">Avg Carry</div>
-          </div>
+            <div class="club-stat-val">${st.avg}y<\/div>
+            <div class="club-stat-lbl">Avg Carry<\/div>
+          <\/div>
           <div class="club-stat-box">
-            <div class="club-stat-val">${st.max}y</div>
-            <div class="club-stat-lbl">Best</div>
-          </div>
+            <div class="club-stat-val">${st.max}y<\/div>
+            <div class="club-stat-lbl">Best<\/div>
+          <\/div>
           <div class="club-stat-box">
-            <div class="club-stat-val">${st.min}y</div>
-            <div class="club-stat-lbl">Min</div>
-          </div>
+            <div class="club-stat-val">${st.min}y<\/div>
+            <div class="club-stat-lbl">Min<\/div>
+          <\/div>
           <div class="club-stat-box">
-            <div class="club-stat-val" style="color:${trendColor};font-size:12px">${trendLabel}</div>
-            <div class="club-stat-lbl">${st.count} shots</div>
-          </div>
-        </div>`;
+            <div class="club-stat-val" style="color:${trendColor};font-size:12px">${trendLabel}<\/div>
+            <div class="club-stat-lbl">${st.count} shots<\/div>
+          <\/div>
+        <\/div>`;
     } else {
       // Show the profile-set distance as the configured estimate
-      statHTML = `<div style="font-size:11px;opacity:0.35;margin-top:4px;padding-bottom:4px">No tracked carries yet · Profile est: ${c.dist || '—'}y</div>`;
+      statHTML = `<div style="font-size:11px;opacity:0.35;margin-top:4px;padding-bottom:4px">No tracked carries yet · Profile est: ${c.dist || '—'}y<\/div>`;
     }
 
     return `<div class="bag-club" style="flex-direction:column;align-items:stretch;gap:0">
       <div style="display:flex;align-items:center;gap:10px;padding-bottom:${st ? '10px' : '0'}">
-        <span class="bag-club-icon">${icon}</span>
+        <span class="bag-club-icon">${icon}<\/span>
         <div class="bag-club-info" style="flex:1">
           <div class="bag-club-name">
             ${c.type}
-            ${st ? `<span style="color:var(--flag);font-size:12px;font-weight:700"> · ${st.avg}y avg</span>`
-              : c.dist ? `<span style="color:var(--flag);font-size:12px"> · ${c.dist}y est</span>` : ''}
-          </div>
-          <div class="bag-club-brand">${[c.brand, c.model].filter(Boolean).join(' · ')}</div>
-        </div>
-        <button class="bag-club-del" onclick="removeClub(${origIdx})">×</button>
-      </div>
+            ${st ? `<span style="color:var(--flag);font-size:12px;font-weight:700"> · ${st.avg}y avg<\/span>`
+              : c.dist ? `<span style="color:var(--flag);font-size:12px"> · ${c.dist}y est<\/span>` : ''}
+          <\/div>
+          <div class="bag-club-brand">${[c.brand, c.model].filter(Boolean).join(' · ')}<\/div>
+        <\/div>
+        <button class="bag-club-del" onclick="removeClub(${origIdx})">×<\/button>
+      <\/div>
       ${statHTML}
-    </div>`;
+    <\/div>`;
   }).join('');
 }
 
@@ -5680,17 +5695,17 @@ function filterPrevCourses(q) {
   const regions = [...new Set(filtered.map(c => c.region))];
   list.innerHTML = regions.map(region => {
     const courses = filtered.filter(c => c.region === region);
-    return `<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--flag);opacity:0.7;padding:8px 2px 4px">${region}</div>` +
+    return `<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--flag);opacity:0.7;padding:8px 2px 4px">${region}<\/div>` +
       courses.map(c => {
         const par = c.holes ? c.holes.reduce((s,h)=>s+h.par,0) : '—';
         const { label, cls } = getTypeLabel(c);
         return `<div class="pr-course-row ${prState.course?.id === c.id ? 'selected' : ''}" onclick="selectPrevCourse(${c.id})">
           <div style="flex:1;min-width:0">
-            <div class="pr-course-name">${c.name}</div>
-            <div class="pr-course-meta">${c.city} · Par ${par}</div>
-          </div>
-          <span class="course-type-badge ${cls}" style="font-size:9px">${label}</span>
-        </div>`;
+            <div class="pr-course-name">${c.name}<\/div>
+            <div class="pr-course-meta">${c.city} · Par ${par}<\/div>
+          <\/div>
+          <span class="course-type-badge ${cls}" style="font-size:9px">${label}<\/span>
+        <\/div>`;
       }).join('');
   }).join('');
 }
@@ -5727,7 +5742,7 @@ async function searchGreenskeeper(inputId, resultsId, context) {
     return;
   }
 
-  results.innerHTML = '<div class="gk-status loading">Searching course database</div>';
+  results.innerHTML = '<div class="gk-status loading">Searching course database<\/div>';
 
   // Timeout after 8 seconds
   const controller = new AbortController();
@@ -5778,24 +5793,24 @@ function renderCourseSearchResults(courses, resultsId, context) {
     const par      = c.holes?.reduce((s, h) => s + h.par, 0) || c.tees?.[0]?.par || 0;
     const holeCount = c.holes?.length || 18;
     return `<div class="gk-result-card" id="gkr-${resultsId}-${i}">
-      <div class="gk-result-name">${c.name}</div>
-      <div class="gk-result-meta">${c.city || ''} · Par ${par} · ${holeCount} holes</div>
+      <div class="gk-result-name">${c.name}<\/div>
+      <div class="gk-result-meta">${c.city || ''} · Par ${par} · ${holeCount} holes<\/div>
       <div class="gk-result-tees" style="display:block;margin-top:10px">
-        <div style="font-size:11px;opacity:0.5;margin-bottom:6px">Select your tees:</div>
+        <div style="font-size:11px;opacity:0.5;margin-bottom:6px">Select your tees:<\/div>
         ${(c.tees || []).map((t, ti) =>
           `<div class="gk-tee-row" onclick="confirmSharedCourse(${i},'${resultsId}','${ti}','${context}')" style="cursor:pointer">
-            <div class="gk-tee-dot" style="background:${t.color}"></div>
-            <div class="gk-tee-name">${t.name}</div>
-            <div class="gk-tee-stats">${t.yards?.toLocaleString()}y · ⭐ ${t.rating} / ${t.slope}</div>
-          </div>`
+            <div class="gk-tee-dot" style="background:${t.color}"><\/div>
+            <div class="gk-tee-name">${t.name}<\/div>
+            <div class="gk-tee-stats">${t.yards?.toLocaleString()}y · ⭐ ${t.rating} / ${t.slope}<\/div>
+          <\/div>`
         ).join('')}
-      </div>
-    </div>`;
+      <\/div>
+    <\/div>`;
   }).join('') +
   `<button onclick="showCourseManualEntryPrompt('','${resultsId}','${context}','Course not here? Add it to the shared database:')"
     style="width:100%;background:none;border:none;color:rgba(255,255,255,0.3);font-size:11px;cursor:pointer;padding:8px;text-decoration:underline;text-underline-offset:3px">
     Course not listed? Add it for everyone
-  </button>`;
+  <\/button>`;
 
   // Store results in session for confirmSharedCourse to reference
   GK_CACHE[`results_${resultsId}`] = courses;
@@ -5985,13 +6000,13 @@ function renderPrevTees() {
   document.getElementById('pr-course-name-display').textContent = `${c.name} · ${c.city}`;
   document.getElementById('pr-tee-list').innerHTML = c.tees.map((t, i) => `
     <div class="pr-tee-row ${prState.teeIdx === i ? 'selected' : ''}" onclick="selectPrevTee(${i})">
-      <div class="pr-tee-dot" style="background:${t.color}"></div>
+      <div class="pr-tee-dot" style="background:${t.color}"><\/div>
       <div style="flex:1">
-        <div class="pr-tee-name">${t.name} Tees</div>
-        <div class="pr-tee-meta">${t.yards.toLocaleString()} yds · Rating ${t.rating} · Slope ${t.slope}</div>
-      </div>
-      ${prState.teeIdx === i ? '<span style="color:var(--flag);font-size:18px">✓</span>' : ''}
-    </div>
+        <div class="pr-tee-name">${t.name} Tees<\/div>
+        <div class="pr-tee-meta">${t.yards.toLocaleString()} yds · Rating ${t.rating} · Slope ${t.slope}<\/div>
+      <\/div>
+      ${prState.teeIdx === i ? '<span style="color:var(--flag);font-size:18px">✓<\/span>' : ''}
+    <\/div>
   `).join('');
 }
 
@@ -6011,7 +6026,7 @@ function renderPrevScorePanel() {
 
   // Summary strip
   document.getElementById('pr-round-summary-strip').innerHTML =
-    `<strong>${c.name}</strong> · ${tee.name} Tees · ${tee.yards ? tee.yards+'y · ' : ''}Par ${par} · ${holeCount} holes · Rating ${tee.rating} / Slope ${tee.slope}`;
+    `<strong>${c.name}<\/strong> · ${tee.name} Tees · ${tee.yards ? tee.yards+'y · ' : ''}Par ${par} · ${holeCount} holes · Rating ${tee.rating} / Slope ${tee.slope}`;
 
   // Always reset total score to par when entering this panel for a new round
   if (!prState._scorePanelInitialized) {
@@ -6033,7 +6048,7 @@ function renderPrevScorePanel() {
   const presets = [];
   for (let d = -4; d <= range; d += step) presets.push(par + d);
   document.getElementById('pr-presets').innerHTML = presets.map(v =>
-    `<button class="tog ${prState.totalScore === v ? 'on' : ''}" onclick="setPrevScorePreset(${v})">${v}</button>`
+    `<button class="tog ${prState.totalScore === v ? 'on' : ''}" onclick="setPrevScorePreset(${v})">${v}<\/button>`
   ).join('');
 }
 
@@ -6112,10 +6127,10 @@ function renderPrevHoleGrid() {
     const rel   = score - hole.par;
     const cls   = rel <= -2 ? 'eagle' : rel === -1 ? 'birdie' : rel === 1 ? 'bogey' : rel >= 2 ? 'double' : '';
     return `<div class="pr-hole-cell ${cls}" id="pr-cell-${i}" onclick="openHolePicker(${i}, event)">
-      <div class="pr-hole-num">${i+1}</div>
-      <div class="pr-hole-par" style="opacity:0.35">P${hole.par}</div>
-      <div class="pr-hole-score">${score}</div>
-    </div>`;
+      <div class="pr-hole-num">${i+1}<\/div>
+      <div class="pr-hole-par" style="opacity:0.35">P${hole.par}<\/div>
+      <div class="pr-hole-score">${score}<\/div>
+    <\/div>`;
   }).join('');
 
   // Running total
@@ -6155,7 +6170,7 @@ function openHolePicker(holeIdx, event) {
   picker.innerHTML = options.map(s => {
     const r = s - par;
     const label = r <= -2 ? '🦅' : r === -1 ? '🐦' : r === 0 ? '—' : r === 1 ? '+1' : `+${r}`;
-    return `<button class="pr-pick-btn ${prState.holeScores[holeIdx]===s?'on':''}" onclick="setPrevHoleScore(${holeIdx},${s})">${s}<br><span style="font-size:8px;opacity:0.6">${label}</span></button>`;
+    return `<button class="pr-pick-btn ${prState.holeScores[holeIdx]===s?'on':''}" onclick="setPrevHoleScore(${holeIdx},${s})">${s}<br><span style="font-size:8px;opacity:0.6">${label}<\/span><\/button>`;
   }).join('');
 
   // Position picker relative to modal sheet
@@ -6371,7 +6386,7 @@ function importData(event) {
       const exported = parsed._exported ? new Date(parsed._exported).toLocaleDateString() : 'unknown date';
 
       document.getElementById('import-preview-content').innerHTML =
-        `<strong style="opacity:0.9">File contains:</strong><br>
+        `<strong style="opacity:0.9">File contains:<\/strong><br>
         📅 Exported ${exported}<br>
         🏌️ ${rounds} round${rounds!==1?'s':''}<br>
         ⛳ ${clubs} club${clubs!==1?'s':''} in bag<br>
@@ -6415,12 +6430,19 @@ function setDataStatus(msg, type) {
 }
 
 // ===== INIT =====
-loadState();
-renderCourseList();
-renderHome();
+window.onerror = function(msg, src, line, col, err) {
+  console.error('PURESTRIKE ERROR:', msg, 'line:', line, 'col:', col, err);
+  return false;
+};
 
-// If there's an active round, re-render it
-if (state.currentRound && state.selectedCourse) { renderHole(); }
+try {
+  loadState();
+  renderCourseList();
+  renderHome();
+  if (state.currentRound && state.selectedCourse) { renderHole(); }
+} catch(e) {
+  console.error('INIT ERROR:', e.message, e.stack);
+}
 
 // ── Background KV sync ────────────────────────────────────────────────────
 // Fetches all courses from the shared Worker on startup and caches any not
