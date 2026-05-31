@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <link rel="apple-touch-icon" href="https://antonlahirsch.github.io/purestrike/icon.jpeg">
-  <link rel="icon" type="image/jpeg" href="https://antonlahirsch.github.io/purestrike/icon.jpeg">
+  <link rel="apple-touch-icon" href="https://antonlahirsch.github.io/purestrike/icon.svg">
+  <link rel="icon" type="image/svg+xml" href="https://antonlahirsch.github.io/purestrike/icon.svg">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="PureStrike">
@@ -1046,13 +1046,13 @@
       <div class="form-field">
         <label class="field-label">Dominant Hand</label>
         <div class="hand-selector">
-          <button class="hand-btn" id="hand-right" data-val="right" onclick="selectHand('right')">
-            <span class="hand-icon">🏌️</span>
-            <span class="hand-label">Right Handed</span>
-          </button>
           <button class="hand-btn" id="hand-left" data-val="left" onclick="selectHand('left')">
             <span class="hand-icon">🏌️</span>
             <span class="hand-label">Left Handed</span>
+          </button>
+          <button class="hand-btn" id="hand-right" data-val="right" onclick="selectHand('right')">
+            <span class="hand-icon">🏌️</span>
+            <span class="hand-label">Right Handed</span>
           </button>
         </div>
         <input type="hidden" id="pf-hand">
