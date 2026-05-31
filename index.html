@@ -5579,144 +5579,147 @@ function selectPrevCourse(id) {
 // Works via a CORS proxy since greenskeeper.org doesn't allow direct cross-origin requests.
 // Cached locally so repeat searches don't re-fetch.
 
-// ===== AI-POWERED COURSE SEARCH =====
-// Uses the Anthropic API (already available in this app context) to look up
-// course scorecards. No CORS issues, works on all devices, structured output.
+// ===== SHARED COURSE CACHE (Cloudflare Worker) =====
+// All users share a community course database via the PureStrike Worker.
+// Courses added by any user become available to all users instantly.
 
-const GK_CACHE = {}; // { 'query': parsedCourse }
+const WORKER_URL = 'https://purestrike-api.antonhirsch17.workers.dev';
+const GK_CACHE   = {}; // local session cache — avoids repeat network calls
 
 async function searchGreenskeeper(inputId, resultsId, context) {
   const query   = document.getElementById(inputId)?.value?.trim();
   const results = document.getElementById(resultsId);
-  if (!query || query.length < 3) return;
+  if (!query || query.length < 2) return;
 
-  // Check cache
+  // Session cache hit
   if (GK_CACHE[query]) {
-    renderAICourseResult(GK_CACHE[query], resultsId, context);
+    renderCourseSearchResults(GK_CACHE[query], resultsId, context);
     return;
   }
 
-  results.innerHTML = '<div class="gk-status loading">Looking up course data</div>';
+  results.innerHTML = '<div class="gk-status loading">Searching course database</div>';
 
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1500,
-        messages: [{
-          role: 'user',
-          content: `You are a golf course data assistant. Look up the golf course: "${query}"
+    const res  = await fetch(`${WORKER_URL}/course?q=${encodeURIComponent(query)}`);
+    const data = await res.json();
 
-Return ONLY valid JSON in this exact format, no other text:
-{
-  "name": "Full official course name",
-  "city": "City, State abbreviation",
-  "holes": 18,
-  "tees": [
-    {"name": "Black", "color": "#222222", "yards": 7200, "rating": 74.2, "slope": 135},
-    {"name": "Blue", "color": "#3366cc", "yards": 6800, "rating": 72.1, "slope": 130},
-    {"name": "White", "color": "#ffffff", "yards": 6400, "rating": 70.0, "slope": 124},
-    {"name": "Red", "color": "#cc3333", "yards": 5600, "rating": 71.2, "slope": 118}
-  ],
-  "holePars": [4,4,3,5,4,4,3,5,4,4,4,3,5,4,4,3,4,5]
-}
-
-Rules:
-- Only include tees that actually exist at this course
-- Use accurate USGA course rating and slope values
-- holePars must have exactly ${query.toLowerCase().includes('9') ? '9' : '18'} entries that sum to par
-- Colors: black=#222222, blue=#3366cc, white=#ffffff, red=#cc3333, gold=#c8a84b, silver=#aaaaaa
-- If you don't know this specific course, return {"error": "Course not found"}
-- Return JSON only, no markdown, no explanation`
-        }]
-      })
-    });
-
-    const data = await response.json();
-    const text = data.content?.[0]?.text || '';
-
-    let parsed;
-    try {
-      parsed = JSON.parse(text.replace(/```json|```/g, '').trim());
-    } catch {
-      throw new Error('Invalid response format');
+    if (data.results && data.results.length > 0) {
+      GK_CACHE[query] = data.results;
+      renderCourseSearchResults(data.results, resultsId, context);
+    } else {
+      // Not in shared cache — show manual entry to add it
+      const total = data.total || 0;
+      showCourseManualEntryPrompt(query, resultsId, context,
+        total > 0
+          ? `Not in our database of ${total.toLocaleString()} courses yet — add it below and it'll be saved for everyone:`
+          : 'Add this course — it will be saved to the shared database for all PureStrike users:'
+      );
     }
-
-    if (parsed.error) {
-      results.innerHTML = `
-        <div class="gk-error">Course not found: "${query}". Try adding the city name (e.g. "Papago Golf Course Phoenix AZ").</div>
-        <button onclick="showManualEntry()" style="width:100%;background:none;border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.6);border-radius:10px;padding:10px;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;margin-top:8px">Enter course manually instead</button>`;
-      return;
-    }
-
-    // Build course object from AI response
-    const holes = parsed.holePars
-      ? parsed.holePars.map((par, i) => ({ par, yards: [0], hcp: i + 1 }))
-      : Array.from({ length: parsed.holes || 18 }, (_, i) => ({ par: 4, yards: [0], hcp: i + 1 }));
-
-    const course = {
-      id:     'ai_' + Date.now(),
-      name:   parsed.name || query,
-      city:   parsed.city || '',
-      region: 'External',
-      type:   holes.length <= 9 ? 'executive' : 'regulation',
-      source: 'ai',
-      tees:   parsed.tees || [],
-      holes,
-      holePars: holes.map(h => h.par)
-    };
-
-    GK_CACHE[query] = course;
-    renderAICourseResult(course, resultsId, context);
-
-  } catch (e) {
-    results.innerHTML = `
-      <div class="gk-error">Search failed — check your connection and try again.</div>
-      <button onclick="showManualEntry()" style="width:100%;background:none;border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.6);border-radius:10px;padding:10px;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;margin-top:8px">Enter course manually instead</button>`;
+  } catch(e) {
+    // Network error — fall back to manual entry
+    showCourseManualEntryPrompt(query, resultsId, context,
+      'Could not reach course database — enter details manually:'
+    );
   }
 }
 
-function renderAICourseResult(course, resultsId, context) {
+function renderCourseSearchResults(courses, resultsId, context) {
   const results = document.getElementById(resultsId);
   if (!results) return;
 
-  const totalPar = course.holes.reduce((s, h) => s + h.par, 0);
-
-  results.innerHTML = `
-    <div class="gk-result-card selected">
-      <div class="gk-result-name">${course.name}</div>
-      <div class="gk-result-meta">${course.city} · Par ${totalPar} · ${course.holes.length} holes</div>
+  results.innerHTML = courses.map((c, i) => {
+    const par      = c.holes?.reduce((s, h) => s + h.par, 0) || c.tees?.[0]?.par || 0;
+    const holeCount = c.holes?.length || 18;
+    return `<div class="gk-result-card" id="gkr-${resultsId}-${i}">
+      <div class="gk-result-name">${c.name}</div>
+      <div class="gk-result-meta">${c.city || ''} · Par ${par} · ${holeCount} holes</div>
       <div class="gk-result-tees" style="display:block;margin-top:10px">
         <div style="font-size:11px;opacity:0.5;margin-bottom:6px">Select your tees:</div>
-        ${course.tees.map((t, ti) => `
-          <div class="gk-tee-row" onclick="confirmAICourse('${encodeURIComponent(JSON.stringify(course))}','${ti}','${context}')" style="cursor:pointer">
+        ${(c.tees || []).map((t, ti) =>
+          `<div class="gk-tee-row" onclick="confirmSharedCourse(${i},'${resultsId}','${ti}','${context}')" style="cursor:pointer">
             <div class="gk-tee-dot" style="background:${t.color}"></div>
             <div class="gk-tee-name">${t.name}</div>
-            <div class="gk-tee-stats">${t.yards.toLocaleString()}y · ⭐ ${t.rating} / ${t.slope}</div>
-          </div>`).join('')}
+            <div class="gk-tee-stats">${t.yards?.toLocaleString()}y · ⭐ ${t.rating} / ${t.slope}</div>
+          </div>`
+        ).join('')}
       </div>
-    </div>
-    <button onclick="showManualEntry()" style="width:100%;background:none;border:none;color:rgba(255,255,255,0.3);font-size:11px;cursor:pointer;padding:8px;text-decoration:underline;text-underline-offset:3px">Not accurate? Enter manually</button>`;
+    </div>`;
+  }).join('') +
+  `<button onclick="showCourseManualEntryPrompt('','${resultsId}','${context}','Course not here? Add it to the shared database:')"
+    style="width:100%;background:none;border:none;color:rgba(255,255,255,0.3);font-size:11px;cursor:pointer;padding:8px;text-decoration:underline;text-underline-offset:3px">
+    Course not listed? Add it for everyone
+  </button>`;
+
+  // Store results in session for confirmSharedCourse to reference
+  GK_CACHE[`results_${resultsId}`] = courses;
 }
 
-function confirmAICourse(encodedCourse, teeIdx, context) {
-  let course;
-  try { course = JSON.parse(decodeURIComponent(encodedCourse)); }
-  catch { return; }
+function confirmSharedCourse(courseIdx, resultsId, teeIdx, context) {
+  const courses = GK_CACHE[`results_${resultsId}`];
+  if (!courses) return;
+  const course = courses[courseIdx];
+  if (!course) return;
+  applyCourseToContext(course, parseInt(teeIdx), context);
+}
 
-  // Give it a stable ID and save to custom courses
-  if (!course.id || course.id.startsWith('ai_')) course.id = 'ai_' + Date.now();
+async function saveManualCourseEntry(resultsId, context) {
+  const name   = document.getElementById('gk-manual-name')?.value?.trim();
+  const city   = document.getElementById('gk-manual-city')?.value?.trim() || '';
+  const par    = parseInt(document.getElementById('gk-manual-par')?.value)    || 72;
+  const rating = parseFloat(document.getElementById('gk-manual-rating')?.value) || 72.0;
+  const slope  = parseInt(document.getElementById('gk-manual-slope')?.value)  || 113;
+  const tee    = document.getElementById('gk-manual-tee')?.value?.trim()      || 'Blue';
+  const yards  = parseInt(document.getElementById('gk-manual-yards')?.value)  || 6500;
+
+  if (!name) { alert('Please enter a course name'); return; }
+
+  // Build holes array — distribute pars evenly
+  const holeCount = par <= 36 ? 9 : 18;
+  const holes = buildDefaultHoles(holeCount, par);
+
+  const course = {
+    name, city,
+    state:  extractStateFromCity(city),
+    region: 'Community',
+    type:   holeCount <= 9 ? 'executive' : 'regulation',
+    tees:   [{ name: tee, color: '#3366cc', yards, rating, slope }],
+    holes,
+    holePars: holes.map(h => h.par)
+  };
+
+  // Save btn feedback
+  const btn = document.querySelector(`#${resultsId} .modal-btn`) ||
+    document.querySelector('[onclick*="saveManualCourseEntry"]');
+  if (btn) { btn.textContent = 'Saving…'; btn.disabled = true; }
+
+  try {
+    // Push to shared Cloudflare KV
+    const res  = await fetch(`${WORKER_URL}/course`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(course)
+    });
+    const data = await res.json();
+    if (data.id) course.id = data.id;
+  } catch(e) {
+    // Worker unreachable — still use locally, just won't be shared
+    course.id = 'local_' + Date.now();
+  }
+
+  // Save locally too
   if (!state.customCourses) state.customCourses = [];
-  const existing = state.customCourses.findIndex(c => c.name === course.name && c.city === course.city);
-  if (existing >= 0) state.customCourses[existing] = course;
+  const exists = state.customCourses.findIndex(c => c.name === course.name && c.city === course.city);
+  if (exists >= 0) state.customCourses[exists] = course;
   else state.customCourses.push(course);
   saveState();
 
+  applyCourseToContext(course, 0, context);
+}
+
+function applyCourseToContext(course, teeIdx, context) {
   if (context === 'start') {
-    state.selectedCourse  = course;
-    state.selectedTeeIdx  = parseInt(teeIdx);
+    state.selectedCourse = course;
+    state.selectedTeeIdx = teeIdx;
     document.getElementById('tee-screen-title').textContent = course.name;
     document.getElementById('tee-screen-sub').textContent   = course.city || '';
     renderTeeOptions();
@@ -5724,8 +5727,8 @@ function confirmAICourse(encodedCourse, teeIdx, context) {
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.nav-btn')[1].classList.add('active');
   } else {
-    prState.course  = course;
-    prState.teeIdx  = parseInt(teeIdx);
+    prState.course = course;
+    prState.teeIdx = teeIdx;
     prState.holeScores = [];
     prState._scorePanelInitialized = false;
     prState.step = 2;
@@ -5733,7 +5736,54 @@ function confirmAICourse(encodedCourse, teeIdx, context) {
   }
 }
 
-// Keep old GK stubs for any lingering HTML references
+function buildDefaultHoles(count, totalPar) {
+  // Distribute par sensibly: 2 par-5s, ~4 par-3s, rest par-4s for 18-hole
+  const holes = [];
+  const par5s  = count === 18 ? 2 : 1;
+  const par3s  = count === 18 ? 4 : 2;
+  const par4s  = count - par5s - par3s;
+  const pars   = [...Array(par5s).fill(5), ...Array(par4s).fill(4), ...Array(par3s).fill(3)];
+  // Shuffle to a natural distribution
+  const arranged = [pars[0],pars[1],pars[2],pars[3],pars[4],pars[5],pars[6],pars[7],pars[8],
+    ...(count > 9 ? pars.slice(9) : [])];
+  for (let i = 0; i < count; i++) {
+    holes.push({ par: arranged[i] || 4, yards: [0], hcp: i + 1 });
+  }
+  return holes;
+}
+
+function extractStateFromCity(city) {
+  const m = city.match(/,\s*([A-Z]{2})$/);
+  return m ? m[1] : '';
+}
+
+// Keep confirmAICourse as alias for any legacy HTML references
+function confirmAICourse(encodedCourse, teeIdx, context) {
+  try {
+    const course = JSON.parse(decodeURIComponent(encodedCourse));
+    applyCourseToContext(course, parseInt(teeIdx), context);
+  } catch(e) {}
+}
+
+// Keep old GK stubs
+async function loadGKCourse() {}
+function parseGKSearchResults() { return []; }
+function parseGKScorecard() { return null; }
+function renderGKResults() {}
+function confirmGKCourse() {}
+
+function showManualEntry() {
+  const el = document.getElementById('pr-manual-course');
+  if (el) {
+    el.style.display = 'block';
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+// Load custom courses from state into COURSES-compatible lookup
+function getCustomCourse(id) {
+  return (state.customCourses || []).find(c => c.id === id);
+}
 async function loadGKCourse() {}
 function parseGKSearchResults() { return []; }
 function parseGKScorecard() { return null; }
