@@ -655,12 +655,11 @@
 </style>
   <!-- Service Worker registration -->
   <script>
-    if ('serviceWorker' in navigator) {
+    if ('serviceWorker' in navigator && location.hostname === 'antonlahirsch.github.io') {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/purestrike/sw.js', { scope: '/purestrike/' })
           .then(reg => {
             console.log('PureStrike SW registered');
-            // Listen for update messages from the service worker
             navigator.serviceWorker.addEventListener('message', e => {
               if (e.data?.type === 'UPDATE_AVAILABLE') {
                 showUpdateBanner();
@@ -672,7 +671,6 @@
     }
 
     function showUpdateBanner() {
-      // Don't show if already visible
       if (document.getElementById('update-banner')) return;
       const banner = document.createElement('div');
       banner.id = 'update-banner';
@@ -691,7 +689,6 @@
         <button onclick="this.parentElement.remove()" style="background:none;border:none;color:rgba(255,255,255,0.4);font-size:20px;cursor:pointer;padding:0 4px">×</button>
       `;
       document.body.appendChild(banner);
-      // Auto-dismiss after 8 seconds
       setTimeout(() => banner?.remove(), 8000);
     }
   </script>
@@ -702,7 +699,7 @@
 <div class="screen active" id="screen-home">
   <div class="screen-inner">
     <div class="hero animate-up">
-      <div class="hero-greeting">Good morning,</div>
+      <div class="hero-greeting" id="hero-greeting">Good morning,</div>
       <div class="hero-name" id="hero-name">Golfer</div>
       <div style="margin-top:12px">
         <span class="handicap-badge">
@@ -5861,7 +5858,13 @@ function showRoundSummaryBanner(round, newIdx, prevIdx) {
 }
 
 function renderHome() {
-  const p = state.profile || {};
+  const p    = state.profile || {};
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning,'
+                 : hour < 17 ? 'Good afternoon,'
+                 : hour < 21 ? 'Good evening,'
+                 : 'Good night,';
+  document.getElementById('hero-greeting').textContent = greeting;
   document.getElementById('hero-name').textContent = p.name?.split(' ')[0] || 'Golfer';
   const displayHcp = getDisplayHandicap();
   document.getElementById('hero-hcp').textContent = displayHcp != null ? displayHcp.toFixed(1) : '—';
