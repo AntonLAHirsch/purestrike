@@ -653,6 +653,48 @@
   .mt8 { margin-top: 8px; }
   .pb16 { padding-bottom: 16px; }
 </style>
+  <!-- Service Worker registration -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/purestrike/sw.js', { scope: '/purestrike/' })
+          .then(reg => {
+            console.log('PureStrike SW registered');
+            // Listen for update messages from the service worker
+            navigator.serviceWorker.addEventListener('message', e => {
+              if (e.data?.type === 'UPDATE_AVAILABLE') {
+                showUpdateBanner();
+              }
+            });
+          })
+          .catch(err => console.log('SW registration failed:', err));
+      });
+    }
+
+    function showUpdateBanner() {
+      // Don't show if already visible
+      if (document.getElementById('update-banner')) return;
+      const banner = document.createElement('div');
+      banner.id = 'update-banner';
+      banner.style.cssText = `
+        position:fixed;bottom:70px;left:12px;right:12px;z-index:9999;
+        background:#1a2e1a;border:1.5px solid #c8a84b;border-radius:14px;
+        padding:12px 14px;display:flex;align-items:center;gap:10px;
+        box-shadow:0 4px 24px rgba(0,0,0,0.5);font-family:'DM Sans',sans-serif;
+      `;
+      banner.innerHTML = `
+        <span style="font-size:18px">🆕</span>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:600;color:#fff">Update available</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.5)">Close and reopen to get the latest version</div>
+        </div>
+        <button onclick="this.parentElement.remove()" style="background:none;border:none;color:rgba(255,255,255,0.4);font-size:20px;cursor:pointer;padding:0 4px">×</button>
+      `;
+      document.body.appendChild(banner);
+      // Auto-dismiss after 8 seconds
+      setTimeout(() => banner?.remove(), 8000);
+    }
+  </script>
 </head>
 <body>
 
