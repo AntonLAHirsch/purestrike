@@ -5411,28 +5411,151 @@ function renderAllRoundsList(rounds) {
     return;
   }
   allRoundsEl.innerHTML = rounds.map((r) => {
-    // Ensure id is always a non-empty string — handles undefined, numeric timestamps, etc.
     if (!r.id || typeof r.id !== 'string') {
       r.id = 'r_' + (r.id != null ? String(r.id) : Math.random().toString(36).slice(2));
     }
-    const rel = r.toPar || 0;
-    const is9h = isNineHoleRound(r);
+    const rel    = r.toPar || 0;
+    const is9h   = isNineHoleRound(r);
     const diffStr = r.differential != null ? `${r.differential>=0?'+':''}${r.differential.toFixed(1)}` : '—';
-    const safeId = r.id.replace(/[^a-zA-Z0-9_]/g, '_');
-    return `<div class="rh-row" id="rh-${safeId}">
-      <div class="rh-score ${rel<0?'under':rel>0?'over':''}">${r.total}<\/div>
-      <div class="rh-info">
-        <div class="rh-course">${r.course}${is9h ? ' <span style="font-size:10px;opacity:0.5;font-weight:400">9-hole<\/span>' : ''}<\/div>
-        <div class="rh-meta">${r.date} · ${r.tee||''} · Par ${r.totalPar||'—'} · ${rel>=0?'+':''}${rel}<\/div>
+    const safeId  = r.id.replace(/[^a-zA-Z0-9_]/g, '_');
+    const hasHoles = (r.holes || []).length > 0;
+
+    return `<div class="rh-row" id="rh-${safeId}" onclick="toggleRoundScorecard('${safeId}')" style="cursor:pointer;flex-direction:column;align-items:stretch;padding:0">
+      <div style="display:flex;align-items:center;padding:12px 0">
+        <div class="rh-score ${rel<0?'under':rel>0?'over':''}">${r.total}<\/div>
+        <div class="rh-info">
+          <div class="rh-course">${r.course}${is9h ? ' <span style="font-size:10px;opacity:0.5;font-weight:400">9-hole<\/span>' : ''}<\/div>
+          <div class="rh-meta">${r.date} · ${r.tee||''} · Par ${r.totalPar||'—'} · ${rel>=0?'+':''}${rel}<\/div>
+        <\/div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;margin-right:8px">
+          ${r.differential!=null?`<span class="rh-diff">${diffStr}<\/span>`:''}
+          ${r.previousRound?'<span class="rh-badge">Manual<\/span>':''}
+          ${r.partial?'<span class="rh-badge" style="background:rgba(230,126,34,0.2);color:var(--bogey);border-color:rgba(230,126,34,0.3)">Partial<\/span>':''}
+          ${hasHoles?`<span style="font-size:10px;opacity:0.3" id="rh-chevron-${safeId}">▼ scorecard<\/span>`:''}
+        <\/div>
+        <button class="rh-del" onclick="event.stopPropagation();confirmDeleteRound('${r.id}', this)" title="Tap to delete">×<\/button>
       <\/div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;margin-right:8px">
-        ${r.differential!=null?`<span class="rh-diff">${diffStr}<\/span>`:''}
-        ${r.previousRound?'<span class="rh-badge">Manual<\/span>':''}
-        ${r.partial?'<span class="rh-badge" style="background:rgba(230,126,34,0.2);color:var(--bogey);border-color:rgba(230,126,34,0.3)">Partial<\/span>':''}
-      <\/div>
-      <button class="rh-del" onclick="confirmDeleteRound('${r.id}', this)" title="Tap to delete">×<\/button>
+      <div id="rh-scorecard-${safeId}" style="display:none"><\/div>
     <\/div>`;
   }).join('');
+}
+
+function toggleRoundScorecard(safeId) {
+  const panel   = document.getElementById(`rh-scorecard-${safeId}`);
+  const chevron = document.getElementById(`rh-chevron-${safeId}`);
+  if (!panel) return;
+
+  if (panel.style.display !== 'none') {
+    panel.style.display = 'none';
+    if (chevron) chevron.textContent = '▼ scorecard';
+    return;
+  }
+
+  // Find the round
+  const roundId = safeId.replace(/^r_/, '');
+  const round   = (state.rounds || []).find(r => {
+    const sid = (r.id || '').replace(/[^a-zA-Z0-9_]/g, '_');
+    return sid === safeId;
+  });
+
+  if (!round || !(round.holes || []).length) {
+    panel.innerHTML = '<div style="padding:8px 0 12px;font-size:12px;opacity:0.4;text-align:center">No hole-by-hole data for this round<\/div>';
+    panel.style.display = 'block';
+    return;
+  }
+
+  panel.innerHTML = buildScorecardHTML(round);
+  panel.style.display = 'block';
+  if (chevron) chevron.textContent = '▲ hide';
+}
+
+function buildScorecardHTML(round) {
+  const holes    = round.holes || [];
+  const holePars = round.holePars || holes.map(() => 4);
+  const front9   = holes.slice(0, 9);
+  const back9    = holes.slice(9, 18);
+
+  function scoreClass(score, par) {
+    if (!score) return '';
+    const diff = score - par;
+    if (diff <= -2) return 'color:#f0c030;font-weight:900'; // eagle+
+    if (diff === -1) return 'color:#6dd46d;font-weight:700'; // birdie
+    if (diff === 0)  return 'color:rgba(255,255,255,0.9)';   // par
+    if (diff === 1)  return 'color:#e87070';                  // bogey
+    return 'color:#cc3333;font-weight:700';                   // double+
+  }
+
+  function buildNine(holeData, pars, startIdx) {
+    const holeNums  = holeData.map((_, i) => startIdx + i + 1);
+    const scores    = holeData.map(h => h.score || '—');
+    const puttsArr  = holeData.map(h => h.putts != null ? h.putts : '—');
+    const totalScore = holeData.reduce((s, h) => s + (h.score || 0), 0);
+    const totalPar   = pars.reduce((s, p) => s + p, 0);
+    const totalPutts = holeData.reduce((s, h) => s + (h.putts || 0), 0);
+
+    const cellStyle = 'width:32px;text-align:center;padding:4px 2px;font-size:13px';
+    const hdrStyle  = 'width:32px;text-align:center;padding:4px 2px;font-size:10px;opacity:0.4';
+
+    return `
+      <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+        <table style="border-collapse:collapse;width:100%;min-width:340px">
+          <tr>
+            <td style="${hdrStyle};text-align:left;width:40px">Hole<\/td>
+            ${holeNums.map(n => `<td style="${hdrStyle}">${n}<\/td>`).join('')}
+            <td style="${hdrStyle}">Tot<\/td>
+          <\/tr>
+          <tr>
+            <td style="${hdrStyle};text-align:left">Par<\/td>
+            ${pars.map(p => `<td style="${cellStyle};opacity:0.5">${p}<\/td>`).join('')}
+            <td style="${cellStyle};opacity:0.5">${totalPar}<\/td>
+          <\/tr>
+          <tr>
+            <td style="${hdrStyle};text-align:left">Score<\/td>
+            ${holeData.map((h, i) => {
+              const sc  = h.score;
+              const par = pars[i];
+              const cls = sc ? scoreClass(sc, par) : 'opacity:0.3';
+              return `<td style="${cellStyle};${cls}">${sc || '—'}<\/td>`;
+            }).join('')}
+            <td style="${cellStyle};font-weight:700">${totalScore || '—'}<\/td>
+          <\/tr>
+          <tr>
+            <td style="${hdrStyle};text-align:left">Putts<\/td>
+            ${holeData.map(h => `<td style="${cellStyle};opacity:0.6">${h.putts != null ? h.putts : '—'}<\/td>`).join('')}
+            <td style="${cellStyle};opacity:0.6">${totalPutts || '—'}<\/td>
+          <\/tr>
+        <\/table>
+      <\/div>`;
+  }
+
+  const totalScore = holes.reduce((s, h) => s + (h.score || 0), 0);
+  const totalPar   = holePars.reduce((s, p) => s + p, 0);
+  const toPar      = totalScore - totalPar;
+  const toParStr   = toPar === 0 ? 'E' : (toPar > 0 ? '+' : '') + toPar;
+
+  let html = `<div style="border-top:1px solid rgba(255,255,255,0.08);padding:10px 0 14px">`;
+
+  if (front9.length > 0) {
+    html += `<div style="font-size:10px;opacity:0.4;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Front 9<\/div>`;
+    html += buildNine(front9, holePars.slice(0, 9), 0);
+  }
+
+  if (back9.length > 0) {
+    html += `<div style="font-size:10px;opacity:0.4;text-transform:uppercase;letter-spacing:1px;margin:10px 0 6px">Back 9<\/div>`;
+    html += buildNine(back9, holePars.slice(9, 18), 9);
+  }
+
+  // Score legend
+  html += `<div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.06)">
+    <span style="font-size:10px;color:#f0c030">■ Eagle+<\/span>
+    <span style="font-size:10px;color:#6dd46d">■ Birdie<\/span>
+    <span style="font-size:10px;opacity:0.5">■ Par<\/span>
+    <span style="font-size:10px;color:#e87070">■ Bogey<\/span>
+    <span style="font-size:10px;color:#cc3333">■ Double+<\/span>
+  <\/div>`;
+
+  html += `<\/div>`;
+  return html;
 }
 
 // ===== PROFILE =====
