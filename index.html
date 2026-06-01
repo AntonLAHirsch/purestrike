@@ -727,6 +727,7 @@
       <button class="filter-tab on"  onclick="setFilter('all',this)">All</button>
       <button class="filter-tab"     onclick="setFilter('CA',this)">🐻 California</button>
       <button class="filter-tab"     onclick="setFilter('AZ',this)">🌵 Arizona</button>
+      <button class="filter-tab"     onclick="setFilter('IL',this)">🦅 Illinois</button>
       <button class="filter-tab"     onclick="setFilter('municipal',this)">🏛 Municipal</button>
       <button class="filter-tab"     onclick="setFilter('executive',this)">⚡ Executive</button>
     </div>
@@ -805,6 +806,24 @@
         <button class="score-plus" onclick="changeScore(1)">+</button>
       </div>
       <div class="score-label-rel" id="score-rel-label">Par</div>
+    </div>
+
+    <!-- GPS Distance to Green -->
+    <div id="gps-card" style="margin:0 16px 14px;display:none">
+      <div style="background:rgba(255,255,255,0.05);border:1.5px solid rgba(255,255,255,0.1);border-radius:16px;padding:14px 16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:18px">📍</span>
+            <span style="font-size:13px;font-weight:600;opacity:0.7">Distance to Green</span>
+          </div>
+          <button id="gps-mark-btn" onclick="markGreen()" style="display:none;background:rgba(200,168,75,0.15);border:1px solid rgba(200,168,75,0.4);color:var(--flag);border-radius:8px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Mark Green</button>
+        </div>
+        <div id="gps-distance-display" style="text-align:center;padding:4px 0">
+          <div id="gps-yards" style="font-family:'Playfair Display',serif;font-size:52px;font-weight:900;color:var(--flag);line-height:1">—</div>
+          <div id="gps-label" style="font-size:12px;opacity:0.45;margin-top:2px">yards to center</div>
+        </div>
+        <div id="gps-status" style="font-size:11px;opacity:0.4;text-align:center;margin-top:6px"></div>
+      </div>
     </div>
 
     <!-- Putts -->
@@ -1012,6 +1031,15 @@
     <div class="card">
       <div class="card-header">Fairways & GIR</div>
       <div id="fg-stats"></div>
+    </div>
+
+    <!-- Strokes Gained -->
+    <div class="card" id="sg-card" style="display:none">
+      <div class="card-header flex-between">
+        <span>Strokes Gained</span>
+        <span id="sg-shot-count" style="font-size:11px;opacity:0.4;font-weight:400"></span>
+      </div>
+      <div id="sg-stats"></div>
     </div>
 
     <!-- kept for compat but hidden — trend now in score-sparkline card -->
@@ -2517,7 +2545,208 @@ const COURSES = [
     holes:[{par:4,yards:[420],hcp:5},{par:4,yards:[395],hcp:9},{par:3,yards:[180],hcp:15},{par:5,yards:[530],hcp:1},{par:4,yards:[410],hcp:7},{par:4,yards:[385],hcp:11},{par:3,yards:[170],hcp:17},{par:5,yards:[540],hcp:3},{par:4,yards:[430],hcp:13},{par:4,yards:[400],hcp:6},{par:4,yards:[415],hcp:4},{par:3,yards:[175],hcp:16},{par:5,yards:[525],hcp:2},{par:4,yards:[390],hcp:10},{par:4,yards:[405],hcp:8},{par:3,yards:[165],hcp:18},{par:4,yards:[420],hcp:14},{par:5,yards:[535],hcp:12}]},
   { id:84, region:"Tucson", type:"municipal", name:"Randolph Dell Urich Golf Course", city:"Tucson, AZ",
     tees:[{name:"Blue",color:"#3366cc",yards:6902,rating:72.5,slope:121},{name:"White",color:"#fff",yards:6459,rating:70.4,slope:117}],
-    holes:[{par:4,yards:[430],hcp:5},{par:4,yards:[405],hcp:9},{par:3,yards:[190],hcp:15},{par:5,yards:[545],hcp:1},{par:4,yards:[420],hcp:7},{par:4,yards:[395],hcp:11},{par:3,yards:[180],hcp:17},{par:5,yards:[555],hcp:3},{par:4,yards:[440],hcp:13},{par:4,yards:[410],hcp:6},{par:4,yards:[425],hcp:4},{par:3,yards:[185],hcp:16},{par:5,yards:[535],hcp:2},{par:4,yards:[400],hcp:10},{par:4,yards:[415],hcp:8},{par:3,yards:[175],hcp:18},{par:4,yards:[430],hcp:14},{par:5,yards:[545],hcp:12}]}
+    holes:[{par:4,yards:[430],hcp:5},{par:4,yards:[405],hcp:9},{par:3,yards:[190],hcp:15},{par:5,yards:[545],hcp:1},{par:4,yards:[420],hcp:7},{par:4,yards:[395],hcp:11},{par:3,yards:[180],hcp:17},{par:5,yards:[555],hcp:3},{par:4,yards:[440],hcp:13},{par:4,yards:[410],hcp:6},{par:4,yards:[425],hcp:4},{par:3,yards:[185],hcp:16},{par:5,yards:[535],hcp:2},{par:4,yards:[400],hcp:10},{par:4,yards:[415],hcp:8},{par:3,yards:[175],hcp:18},{par:4,yards:[430],hcp:14},{par:5,yards:[545],hcp:12}]},
+  // ── ILLINOIS / CHICAGO SUBURBS ────────────────────────────────────────────
+  { id:85,  region:"DuPage County", name:"Cantigny Golf (Hillside)", city:"Wheaton, IL",
+    tees:[{name:"Black",color:"#222",yards:6779,rating:72.8,slope:133},{name:"Blue",color:"#3366cc",yards:6364,rating:70.7,slope:128},{name:"White",color:"#fff",yards:5933,rating:68.6,slope:123},{name:"Red",color:"#cc3333",yards:5241,rating:70.3,slope:119}],
+    holes:[{par:4,yards:[395],hcp:5},{par:4,yards:[380],hcp:9},{par:3,yards:[185],hcp:17},{par:5,yards:[540],hcp:1},{par:4,yards:[410],hcp:3},{par:4,yards:[370],hcp:11},{par:3,yards:[175],hcp:15},{par:5,yards:[530],hcp:7},{par:4,yards:[420],hcp:13},{par:4,yards:[400],hcp:6},{par:4,yards:[385],hcp:10},{par:3,yards:[190],hcp:16},{par:5,yards:[545],hcp:2},{par:4,yards:[415],hcp:4},{par:4,yards:[375],hcp:12},{par:3,yards:[180],hcp:18},{par:4,yards:[405],hcp:8},{par:5,yards:[535],hcp:14}]},
+
+  { id:86,  region:"DuPage County", name:"Cantigny Golf (Lakeside)", city:"Wheaton, IL",
+    tees:[{name:"Black",color:"#222",yards:6718,rating:72.3,slope:132},{name:"Blue",color:"#3366cc",yards:6302,rating:70.2,slope:127},{name:"White",color:"#fff",yards:5871,rating:68.1,slope:122},{name:"Red",color:"#cc3333",yards:5198,rating:69.8,slope:117}],
+    holes:[{par:4,yards:[390],hcp:5},{par:4,yards:[375],hcp:9},{par:3,yards:[180],hcp:17},{par:5,yards:[535],hcp:1},{par:4,yards:[405],hcp:3},{par:4,yards:[365],hcp:11},{par:3,yards:[170],hcp:15},{par:5,yards:[525],hcp:7},{par:4,yards:[415],hcp:13},{par:4,yards:[395],hcp:6},{par:4,yards:[380],hcp:10},{par:3,yards:[185],hcp:16},{par:5,yards:[540],hcp:2},{par:4,yards:[410],hcp:4},{par:4,yards:[370],hcp:12},{par:3,yards:[175],hcp:18},{par:4,yards:[400],hcp:8},{par:5,yards:[530],hcp:14}]},
+
+  { id:87,  region:"DuPage County", name:"Arrowhead Golf Club (East)", city:"Wheaton, IL",
+    tees:[{name:"Blue",color:"#3366cc",yards:6494,rating:70.7,slope:125},{name:"White",color:"#fff",yards:6094,rating:68.8,slope:120},{name:"Red",color:"#cc3333",yards:5408,rating:71.0,slope:121}],
+    holes:[{par:4,yards:[390],hcp:5},{par:4,yards:[370],hcp:9},{par:3,yards:[180],hcp:17},{par:5,yards:[520],hcp:1},{par:4,yards:[400],hcp:3},{par:4,yards:[360],hcp:11},{par:3,yards:[170],hcp:15},{par:5,yards:[510],hcp:7},{par:4,yards:[410],hcp:13},{par:4,yards:[385],hcp:6},{par:4,yards:[375],hcp:10},{par:3,yards:[175],hcp:16},{par:5,yards:[525],hcp:2},{par:4,yards:[395],hcp:4},{par:4,yards:[365],hcp:12},{par:3,yards:[165],hcp:18},{par:4,yards:[385],hcp:8},{par:5,yards:[515],hcp:14}]},
+
+  { id:88,  region:"DuPage County", name:"Arrowhead Golf Club (West)", city:"Wheaton, IL",
+    tees:[{name:"Blue",color:"#3366cc",yards:6432,rating:70.3,slope:124},{name:"White",color:"#fff",yards:6033,rating:68.4,slope:119},{name:"Red",color:"#cc3333",yards:5350,rating:70.6,slope:119}],
+    holes:[{par:4,yards:[385],hcp:5},{par:4,yards:[365],hcp:9},{par:3,yards:[178],hcp:17},{par:5,yards:[515],hcp:1},{par:4,yards:[395],hcp:3},{par:4,yards:[355],hcp:11},{par:3,yards:[168],hcp:15},{par:5,yards:[505],hcp:7},{par:4,yards:[405],hcp:13},{par:4,yards:[380],hcp:6},{par:4,yards:[370],hcp:10},{par:3,yards:[172],hcp:16},{par:5,yards:[520],hcp:2},{par:4,yards:[390],hcp:4},{par:4,yards:[360],hcp:12},{par:3,yards:[162],hcp:18},{par:4,yards:[380],hcp:8},{par:5,yards:[510],hcp:14}]},
+
+  { id:89,  region:"DuPage County", type:"municipal", name:"Bloomingdale Golf Club", city:"Bloomingdale, IL",
+    tees:[{name:"Blue",color:"#3366cc",yards:6601,rating:71.5,slope:128},{name:"White",color:"#fff",yards:6211,rating:69.5,slope:122},{name:"Red",color:"#cc3333",yards:5461,rating:71.1,slope:121}],
+    holes:[{par:4,yards:[400],hcp:5},{par:4,yards:[380],hcp:9},{par:3,yards:[182],hcp:17},{par:5,yards:[530],hcp:1},{par:4,yards:[410],hcp:3},{par:4,yards:[370],hcp:11},{par:3,yards:[172],hcp:15},{par:5,yards:[520],hcp:7},{par:4,yards:[415],hcp:13},{par:4,yards:[390],hcp:6},{par:4,yards:[378],hcp:10},{par:3,yards:[180],hcp:16},{par:5,yards:[535],hcp:2},{par:4,yards:[402],hcp:4},{par:4,yards:[368],hcp:12},{par:3,yards:[168],hcp:18},{par:4,yards:[395],hcp:8},{par:5,yards:[521],hcp:14}]},
+
+  { id:90,  region:"DuPage County", name:"Glendale Lakes Golf Club", city:"Glendale Heights, IL",
+    tees:[{name:"Blue",color:"#3366cc",yards:6298,rating:69.7,slope:118},{name:"White",color:"#fff",yards:5881,rating:67.6,slope:113},{name:"Red",color:"#cc3333",yards:5217,rating:69.5,slope:116}],
+    holes:[{par:4,yards:[378],hcp:5},{par:4,yards:[362],hcp:9},{par:3,yards:[172],hcp:17},{par:5,yards:[508],hcp:1},{par:4,yards:[388],hcp:3},{par:4,yards:[352],hcp:11},{par:3,yards:[162],hcp:15},{par:5,yards:[498],hcp:7},{par:4,yards:[398],hcp:13},{par:4,yards:[372],hcp:6},{par:4,yards:[360],hcp:10},{par:3,yards:[168],hcp:16},{par:5,yards:[512],hcp:2},{par:4,yards:[382],hcp:4},{par:4,yards:[354],hcp:12},{par:3,yards:[158],hcp:18},{par:4,yards:[374],hcp:8},{par:5,yards:[499],hcp:14}]},
+
+  { id:91,  region:"DuPage County", name:"Eaglewood Golf Club", city:"Itasca, IL",
+    tees:[{name:"Black",color:"#222",yards:6786,rating:72.5,slope:130},{name:"Blue",color:"#3366cc",yards:6423,rating:70.7,slope:126},{name:"White",color:"#fff",yards:5991,rating:68.6,slope:121}],
+    holes:[{par:4,yards:[405],hcp:5},{par:4,yards:[385],hcp:9},{par:3,yards:[188],hcp:17},{par:5,yards:[542],hcp:1},{par:4,yards:[415],hcp:3},{par:4,yards:[374],hcp:11},{par:3,yards:[178],hcp:15},{par:5,yards:[532],hcp:7},{par:4,yards:[420],hcp:13},{par:4,yards:[395],hcp:6},{par:4,yards:[382],hcp:10},{par:3,yards:[184],hcp:16},{par:5,yards:[548],hcp:2},{par:4,yards:[408],hcp:4},{par:4,yards:[372],hcp:12},{par:3,yards:[174],hcp:18},{par:4,yards:[399],hcp:8},{par:5,yards:[538],hcp:14}]},
+
+  { id:92,  region:"DuPage County", type:"municipal", name:"Village Links of Glen Ellyn", city:"Glen Ellyn, IL",
+    tees:[{name:"Black",color:"#222",yards:6737,rating:72.4,slope:133},{name:"Blue",color:"#3366cc",yards:6337,rating:70.4,slope:127},{name:"White",color:"#fff",yards:5929,rating:68.4,slope:122},{name:"Red",color:"#cc3333",yards:5213,rating:69.9,slope:118}],
+    holes:[{par:4,yards:[402],hcp:5},{par:4,yards:[382],hcp:9},{par:3,yards:[186],hcp:17},{par:5,yards:[538],hcp:1},{par:4,yards:[412],hcp:3},{par:4,yards:[372],hcp:11},{par:3,yards:[176],hcp:15},{par:5,yards:[528],hcp:7},{par:4,yards:[418],hcp:13},{par:4,yards:[392],hcp:6},{par:4,yards:[380],hcp:10},{par:3,yards:[182],hcp:16},{par:5,yards:[544],hcp:2},{par:4,yards:[405],hcp:4},{par:4,yards:[370],hcp:12},{par:3,yards:[172],hcp:18},{par:4,yards:[396],hcp:8},{par:5,yards:[534],hcp:14}]},
+
+  { id:93,  region:"Cook County", name:"Cog Hill Golf (Dubsdread)", city:"Lemont, IL",
+    tees:[{name:"Black",color:"#222",yards:7554,rating:78.0,slope:153},{name:"Blue",color:"#3366cc",yards:6940,rating:75.1,slope:143},{name:"White",color:"#fff",yards:6395,rating:72.2,slope:136},{name:"Red",color:"#cc3333",yards:5846,rating:74.1,slope:135}],
+    holes:[{par:4,yards:[445],hcp:7},{par:4,yards:[430],hcp:11},{par:4,yards:[415],hcp:3},{par:3,yards:[224],hcp:17},{par:5,yards:[610],hcp:1},{par:4,yards:[460],hcp:5},{par:4,yards:[425],hcp:15},{par:3,yards:[240],hcp:13},{par:5,yards:[605],hcp:9},{par:4,yards:[455],hcp:4},{par:4,yards:[440],hcp:8},{par:4,yards:[418],hcp:2},{par:3,yards:[216],hcp:18},{par:5,yards:[620],hcp:6},{par:4,yards:[432],hcp:10},{par:3,yards:[215],hcp:16},{par:4,yards:[448],hcp:12},{par:5,yards:[601],hcp:14}]},
+
+  { id:94,  region:"Cook County", name:"Cog Hill Golf (Ravines)", city:"Lemont, IL",
+    tees:[{name:"Blue",color:"#3366cc",yards:6608,rating:71.1,slope:124},{name:"White",color:"#fff",yards:6185,rating:69.1,slope:118},{name:"Red",color:"#cc3333",yards:5542,rating:71.5,slope:120}],
+    holes:[{par:4,yards:[400],hcp:5},{par:4,yards:[380],hcp:9},{par:3,yards:[185],hcp:17},{par:5,yards:[530],hcp:1},{par:4,yards:[410],hcp:3},{par:4,yards:[370],hcp:11},{par:3,yards:[175],hcp:15},{par:5,yards:[520],hcp:7},{par:4,yards:[415],hcp:13},{par:4,yards:[390],hcp:6},{par:4,yards:[378],hcp:10},{par:3,yards:[180],hcp:16},{par:5,yards:[535],hcp:2},{par:4,yards:[402],hcp:4},{par:4,yards:[368],hcp:12},{par:3,yards:[170],hcp:18},{par:4,yards:[395],hcp:8},{par:5,yards:[525],hcp:14}]},
+
+  { id:95,  region:"Cook County", type:"municipal", name:"George W. Dunne National Golf Course", city:"Oak Forest, IL",
+    tees:[{name:"Black",color:"#222",yards:7205,rating:74.5,slope:130},{name:"Blue",color:"#3366cc",yards:6777,rating:72.4,slope:125},{name:"White",color:"#fff",yards:6299,rating:70.2,slope:120},{name:"Red",color:"#cc3333",yards:5608,rating:72.1,slope:124}],
+    holes:[{par:4,yards:[435],hcp:5},{par:4,yards:[415],hcp:9},{par:3,yards:[195],hcp:17},{par:5,yards:[555],hcp:1},{par:4,yards:[445],hcp:3},{par:4,yards:[400],hcp:11},{par:3,yards:[185],hcp:15},{par:5,yards:[545],hcp:7},{par:4,yards:[425],hcp:13},{par:4,yards:[420],hcp:6},{par:4,yards:[408],hcp:10},{par:3,yards:[190],hcp:16},{par:5,yards:[560],hcp:2},{par:4,yards:[440],hcp:4},{par:4,yards:[395],hcp:12},{par:3,yards:[180],hcp:18},{par:4,yards:[428],hcp:8},{par:5,yards:[550],hcp:14}]},
+
+  { id:96,  region:"Cook County", type:"municipal", name:"Flagg Creek Golf Course", city:"Countryside, IL",
+    tees:[{name:"Blue",color:"#3366cc",yards:6303,rating:69.8,slope:122},{name:"White",color:"#fff",yards:5893,rating:67.6,slope:116},{name:"Red",color:"#cc3333",yards:5244,rating:69.5,slope:118}],
+    holes:[{par:4,yards:[378],hcp:5},{par:4,yards:[360],hcp:9},{par:3,yards:[172],hcp:17},{par:5,yards:[510],hcp:1},{par:4,yards:[388],hcp:3},{par:4,yards:[352],hcp:11},{par:3,yards:[162],hcp:15},{par:5,yards:[500],hcp:7},{par:4,yards:[398],hcp:13},{par:4,yards:[372],hcp:6},{par:4,yards:[358],hcp:10},{par:3,yards:[168],hcp:16},{par:5,yards:[514],hcp:2},{par:4,yards:[381],hcp:4},{par:4,yards:[354],hcp:12},{par:3,yards:[158],hcp:18},{par:4,yards:[374],hcp:8},{par:5,yards:[501],hcp:14}]},
+
+  { id:97,  region:"Cook County", type:"municipal", name:"Chick Evans Golf Course", city:"Morton Grove, IL",
+    tees:[{name:"Blue",color:"#3366cc",yards:6400,rating:70.1,slope:116},{name:"White",color:"#fff",yards:6003,rating:68.2,slope:112},{name:"Red",color:"#cc3333",yards:5348,rating:70.2,slope:115}],
+    holes:[{par:4,yards:[384],hcp:5},{par:4,yards:[365],hcp:9},{par:3,yards:[174],hcp:17},{par:5,yards:[514],hcp:1},{par:4,yards:[392],hcp:3},{par:4,yards:[355],hcp:11},{par:3,yards:[165],hcp:15},{par:5,yards:[504],hcp:7},{par:4,yards:[400],hcp:13},{par:4,yards:[376],hcp:6},{par:4,yards:[362],hcp:10},{par:3,yards:[170],hcp:16},{par:5,yards:[518],hcp:2},{par:4,yards:[385],hcp:4},{par:4,yards:[356],hcp:12},{par:3,yards:[161],hcp:18},{par:4,yards:[378],hcp:8},{par:5,yards:[505],hcp:14}]},
+
+  { id:98,  region:"Cook County", name:"Bolingbrook Golf Club", city:"Bolingbrook, IL",
+    tees:[{name:"Black",color:"#222",yards:7104,rating:74.0,slope:135},{name:"Blue",color:"#3366cc",yards:6631,rating:71.8,slope:129},{name:"White",color:"#fff",yards:6161,rating:69.6,slope:123},{name:"Red",color:"#cc3333",yards:5437,rating:71.6,slope:124}],
+    holes:[{par:4,yards:[428],hcp:5},{par:4,yards:[408],hcp:9},{par:3,yards:[192],hcp:17},{par:5,yards:[548],hcp:1},{par:4,yards:[438],hcp:3},{par:4,yards:[392],hcp:11},{par:3,yards:[182],hcp:15},{par:5,yards:[538],hcp:7},{par:4,yards:[422],hcp:13},{par:4,yards:[414],hcp:6},{par:4,yards:[400],hcp:10},{par:3,yards:[188],hcp:16},{par:5,yards:[554],hcp:2},{par:4,yards:[432],hcp:4},{par:4,yards:[390],hcp:12},{par:3,yards:[178],hcp:18},{par:4,yards:[422],hcp:8},{par:5,yards:[542],hcp:14}]},
+
+  { id:99,  region:"Cook County", name:"Downers Grove Golf Club", city:"Downers Grove, IL",
+    tees:[{name:"Blue",color:"#3366cc",yards:6198,rating:69.5,slope:118},{name:"White",color:"#fff",yards:5811,rating:67.5,slope:113},{name:"Red",color:"#cc3333",yards:5144,rating:69.3,slope:114}],
+    holes:[{par:4,yards:[372],hcp:5},{par:4,yards:[354],hcp:9},{par:3,yards:[168],hcp:17},{par:5,yards:[504],hcp:1},{par:4,yards:[382],hcp:3},{par:4,yards:[345],hcp:11},{par:3,yards:[158],hcp:15},{par:5,yards:[494],hcp:7},{par:4,yards:[390],hcp:13},{par:4,yards:[366],hcp:6},{par:4,yards:[352],hcp:10},{par:3,yards:[164],hcp:16},{par:5,yards:[508],hcp:2},{par:4,yards:[375],hcp:4},{par:4,yards:[347],hcp:12},{par:3,yards:[154],hcp:18},{par:4,yards:[368],hcp:8},{par:5,yards:[497],hcp:14}]},
+
+  { id:100, region:"Cook County", name:"Harborside International (Port)", city:"Chicago, IL",
+    tees:[{name:"Black",color:"#222",yards:7166,rating:74.5,slope:131},{name:"Blue",color:"#3366cc",yards:6728,rating:72.4,slope:126},{name:"White",color:"#fff",yards:6272,rating:70.2,slope:121},{name:"Red",color:"#cc3333",yards:5558,rating:71.8,slope:122}],
+    holes:[{par:4,yards:[432],hcp:5},{par:4,yards:[412],hcp:9},{par:3,yards:[196],hcp:17},{par:5,yards:[552],hcp:1},{par:4,yards:[442],hcp:3},{par:4,yards:[396],hcp:11},{par:3,yards:[186],hcp:15},{par:5,yards:[542],hcp:7},{par:4,yards:[426],hcp:13},{par:4,yards:[418],hcp:6},{par:4,yards:[404],hcp:10},{par:3,yards:[192],hcp:16},{par:5,yards:[558],hcp:2},{par:4,yards:[436],hcp:4},{par:4,yards:[394],hcp:12},{par:3,yards:[182],hcp:18},{par:4,yards:[426],hcp:8},{par:5,yards:[546],hcp:14}]},
+
+  { id:101, region:"Cook County", name:"Harborside International (Starboard)", city:"Chicago, IL",
+    tees:[{name:"Black",color:"#222",yards:7132,rating:74.2,slope:130},{name:"Blue",color:"#3366cc",yards:6694,rating:72.1,slope:125},{name:"White",color:"#fff",yards:6238,rating:69.9,slope:120},{name:"Red",color:"#cc3333",yards:5524,rating:71.5,slope:121}],
+    holes:[{par:4,yards:[428],hcp:5},{par:4,yards:[408],hcp:9},{par:3,yards:[194],hcp:17},{par:5,yards:[548],hcp:1},{par:4,yards:[438],hcp:3},{par:4,yards:[392],hcp:11},{par:3,yards:[184],hcp:15},{par:5,yards:[538],hcp:7},{par:4,yards:[422],hcp:13},{par:4,yards:[414],hcp:6},{par:4,yards:[400],hcp:10},{par:3,yards:[190],hcp:16},{par:5,yards:[554],hcp:2},{par:4,yards:[432],hcp:4},{par:4,yards:[390],hcp:12},{par:3,yards:[180],hcp:18},{par:4,yards:[422],hcp:8},{par:5,yards:[542],hcp:14}]},
+
+  { id:102, region:"Lake County", name:"Bittersweet Golf Club", city:"Gurnee, IL",
+    tees:[{name:"Black",color:"#222",yards:6756,rating:72.4,slope:131},{name:"Blue",color:"#3366cc",yards:6348,rating:70.4,slope:125},{name:"White",color:"#fff",yards:5932,rating:68.4,slope:120},{name:"Red",color:"#cc3333",yards:5248,rating:70.0,slope:118}],
+    holes:[{par:4,yards:[406],hcp:5},{par:4,yards:[386],hcp:9},{par:3,yards:[188],hcp:17},{par:5,yards:[540],hcp:1},{par:4,yards:[416],hcp:3},{par:4,yards:[374],hcp:11},{par:3,yards:[178],hcp:15},{par:5,yards:[530],hcp:7},{par:4,yards:[420],hcp:13},{par:4,yards:[396],hcp:6},{par:4,yards:[382],hcp:10},{par:3,yards:[184],hcp:16},{par:5,yards:[546],hcp:2},{par:4,yards:[408],hcp:4},{par:4,yards:[372],hcp:12},{par:3,yards:[174],hcp:18},{par:4,yards:[400],hcp:8},{par:5,yards:[534],hcp:14}]},
+
+  { id:103, region:"Lake County", type:"municipal", name:"Bonnie Brook Golf Course", city:"Waukegan, IL",
+    tees:[{name:"Blue",color:"#3366cc",yards:6598,rating:71.2,slope:124},{name:"White",color:"#fff",yards:6188,rating:69.2,slope:118},{name:"Red",color:"#cc3333",yards:5484,rating:70.8,slope:119}],
+    holes:[{par:4,yards:[398],hcp:5},{par:4,yards:[378],hcp:9},{par:3,yards:[182],hcp:17},{par:5,yards:[532],hcp:1},{par:4,yards:[408],hcp:3},{par:4,yards:[368],hcp:11},{par:3,yards:[172],hcp:15},{par:5,yards:[522],hcp:7},{par:4,yards:[414],hcp:13},{par:4,yards:[388],hcp:6},{par:4,yards:[376],hcp:10},{par:3,yards:[178],hcp:16},{par:5,yards:[538],hcp:2},{par:4,yards:[400],hcp:4},{par:4,yards:[366],hcp:12},{par:3,yards:[168],hcp:18},{par:4,yards:[392],hcp:8},{par:5,yards:[524],hcp:14}]},
+
+  { id:104, region:"Kane County", name:"Bowes Creek Country Club", city:"Elgin, IL",
+    tees:[{name:"Black",color:"#222",yards:6900,rating:73.6,slope:143},{name:"Blue",color:"#3366cc",yards:6400,rating:71.2,slope:137},{name:"White",color:"#fff",yards:5882,rating:68.9,slope:131},{name:"Red",color:"#cc3333",yards:5192,rating:70.6,slope:128}],
+    holes:[{par:4,yards:[418],hcp:5},{par:4,yards:[396],hcp:9},{par:3,yards:[192],hcp:17},{par:5,yards:[548],hcp:1},{par:4,yards:[428],hcp:3},{par:4,yards:[382],hcp:11},{par:3,yards:[182],hcp:15},{par:5,yards:[538],hcp:7},{par:4,yards:[424],hcp:13},{par:4,yards:[404],hcp:6},{par:4,yards:[390],hcp:10},{par:3,yards:[188],hcp:16},{par:5,yards:[554],hcp:2},{par:4,yards:[422],hcp:4},{par:4,yards:[380],hcp:12},{par:3,yards:[178],hcp:18},{par:4,yards:[412],hcp:8},{par:5,yards:[542],hcp:14}]},
+
+  { id:105, region:"Kane County", name:"Highlands of Elgin Golf Course", city:"Elgin, IL",
+    tees:[{name:"Black",color:"#222",yards:7054,rating:73.7,slope:139},{name:"Blue",color:"#3366cc",yards:6548,rating:71.4,slope:133},{name:"White",color:"#fff",yards:6064,rating:69.2,slope:128},{name:"Red",color:"#cc3333",yards:5388,rating:71.0,slope:124}],
+    holes:[{par:4,yards:[425],hcp:5},{par:4,yards:[405],hcp:9},{par:3,yards:[195],hcp:17},{par:5,yards:[552],hcp:1},{par:4,yards:[435],hcp:3},{par:4,yards:[390],hcp:11},{par:3,yards:[185],hcp:15},{par:5,yards:[542],hcp:7},{par:4,yards:[428],hcp:13},{par:4,yards:[412],hcp:6},{par:4,yards:[398],hcp:10},{par:3,yards:[190],hcp:16},{par:5,yards:[558],hcp:2},{par:4,yards:[428],hcp:4},{par:4,yards:[388],hcp:12},{par:3,yards:[180],hcp:18},{par:4,yards:[418],hcp:8},{par:5,yards:[545],hcp:14}]},
+
+  { id:106, region:"Kane County", name:"Elgin Country Club", city:"Elgin, IL",
+    tees:[{name:"Blue",color:"#3366cc",yards:6450,rating:70.9,slope:128},{name:"White",color:"#fff",yards:6050,rating:69.0,slope:123},{name:"Red",color:"#cc3333",yards:5418,rating:70.8,slope:121}],
+    holes:[{par:4,yards:[388],hcp:5},{par:4,yards:[368],hcp:9},{par:3,yards:[178],hcp:17},{par:5,yards:[522],hcp:1},{par:4,yards:[398],hcp:3},{par:4,yards:[360],hcp:11},{par:3,yards:[170],hcp:15},{par:5,yards:[514],hcp:7},{par:4,yards:[406],hcp:13},{par:4,yards:[380],hcp:6},{par:4,yards:[366],hcp:10},{par:3,yards:[174],hcp:16},{par:5,yards:[526],hcp:2},{par:4,yards:[392],hcp:4},{par:4,yards:[358],hcp:12},{par:3,yards:[166],hcp:18},{par:4,yards:[384],hcp:8},{par:5,yards:[506],hcp:14}]},
+
+  { id:107, region:"Kane County", name:"Golf Club of Illinois", city:"Algonquin, IL",
+    tees:[{name:"Black",color:"#222",yards:6911,rating:73.2,slope:132},{name:"Blue",color:"#3366cc",yards:6465,rating:71.1,slope:127},{name:"White",color:"#fff",yards:6014,rating:69.0,slope:122},{name:"Red",color:"#cc3333",yards:5332,rating:70.5,slope:120}],
+    holes:[{par:4,yards:[416],hcp:5},{par:4,yards:[396],hcp:9},{par:3,yards:[190],hcp:17},{par:5,yards:[546],hcp:1},{par:4,yards:[426],hcp:3},{par:4,yards:[382],hcp:11},{par:3,yards:[180],hcp:15},{par:5,yards:[536],hcp:7},{par:4,yards:[422],hcp:13},{par:4,yards:[402],hcp:6},{par:4,yards:[390],hcp:10},{par:3,yards:[186],hcp:16},{par:5,yards:[552],hcp:2},{par:4,yards:[420],hcp:4},{par:4,yards:[380],hcp:12},{par:3,yards:[176],hcp:18},{par:4,yards:[410],hcp:8},{par:5,yards:[540],hcp:14}]},
+
+  { id:108, region:"Kane County", name:"Bonnie Dundee Golf Club", city:"Carpentersville, IL",
+    tees:[{name:"Blue",color:"#3366cc",yards:6471,rating:70.9,slope:122},{name:"White",color:"#fff",yards:6082,rating:68.9,slope:117},{name:"Red",color:"#cc3333",yards:5404,rating:70.6,slope:116}],
+    holes:[{par:4,yards:[390],hcp:5},{par:4,yards:[370],hcp:9},{par:3,yards:[180],hcp:17},{par:5,yards:[524],hcp:1},{par:4,yards:[400],hcp:3},{par:4,yards:[362],hcp:11},{par:3,yards:[172],hcp:15},{par:5,yards:[516],hcp:7},{par:4,yards:[408],hcp:13},{par:4,yards:[382],hcp:6},{par:4,yards:[368],hcp:10},{par:3,yards:[176],hcp:16},{par:5,yards:[528],hcp:2},{par:4,yards:[394],hcp:4},{par:4,yards:[360],hcp:12},{par:3,yards:[168],hcp:18},{par:4,yards:[386],hcp:8},{par:5,yards:[508],hcp:14}]},
+
+  { id:109, region:"Lake County", name:"Crane's Landing Golf Club", city:"Lincolnshire, IL",
+    tees:[{name:"Black",color:"#222",yards:6818,rating:72.8,slope:131},{name:"Blue",color:"#3366cc",yards:6384,rating:70.7,slope:125},{name:"White",color:"#fff",yards:5962,rating:68.7,slope:120},{name:"Red",color:"#cc3333",yards:5278,rating:70.3,slope:118}],
+    holes:[{par:4,yards:[412],hcp:5},{par:4,yards:[392],hcp:9},{par:3,yards:[188],hcp:17},{par:5,yards:[544],hcp:1},{par:4,yards:[422],hcp:3},{par:4,yards:[378],hcp:11},{par:3,yards:[178],hcp:15},{par:5,yards:[534],hcp:7},{par:4,yards:[418],hcp:13},{par:4,yards:[398],hcp:6},{par:4,yards:[386],hcp:10},{par:3,yards:[184],hcp:16},{par:5,yards:[550],hcp:2},{par:4,yards:[416],hcp:4},{par:4,yards:[376],hcp:12},{par:3,yards:[174],hcp:18},{par:4,yards:[406],hcp:8},{par:5,yards:[538],hcp:14}]},
+
+  { id:110, region:"Lake County", name:"Steeple Chase Golf Club", city:"Mundelein, IL",
+    tees:[{name:"Black",color:"#222",yards:7005,rating:73.8,slope:138},{name:"Blue",color:"#3366cc",yards:6534,rating:71.6,slope:131},{name:"White",color:"#fff",yards:6064,rating:69.4,slope:125},{name:"Red",color:"#cc3333",yards:5380,rating:71.3,slope:123}],
+    holes:[{par:4,yards:[422],hcp:5},{par:4,yards:[402],hcp:9},{par:3,yards:[194],hcp:17},{par:5,yards:[550],hcp:1},{par:4,yards:[432],hcp:3},{par:4,yards:[386],hcp:11},{par:3,yards:[184],hcp:15},{par:5,yards:[540],hcp:7},{par:4,yards:[424],hcp:13},{par:4,yards:[408],hcp:6},{par:4,yards:[394],hcp:10},{par:3,yards:[190],hcp:16},{par:5,yards:[556],hcp:2},{par:4,yards:[426],hcp:4},{par:4,yards:[384],hcp:12},{par:3,yards:[180],hcp:18},{par:4,yards:[416],hcp:8},{par:5,yards:[544],hcp:14}]},
+
+  { id:111, region:"Lake County", name:"Brae Loch Golf Club", city:"Grayslake, IL",
+    tees:[{name:"Blue",color:"#3366cc",yards:6536,rating:71.2,slope:126},{name:"White",color:"#fff",yards:6138,rating:69.3,slope:121},{name:"Red",color:"#cc3333",yards:5442,rating:71.0,slope:119}],
+    holes:[{par:4,yards:[394],hcp:5},{par:4,yards:[374],hcp:9},{par:3,yards:[182],hcp:17},{par:5,yards:[528],hcp:1},{par:4,yards:[404],hcp:3},{par:4,yards:[366],hcp:11},{par:3,yards:[174],hcp:15},{par:5,yards:[520],hcp:7},{par:4,yards:[410],hcp:13},{par:4,yards:[386],hcp:6},{par:4,yards:[372],hcp:10},{par:3,yards:[178],hcp:16},{par:5,yards:[532],hcp:2},{par:4,yards:[396],hcp:4},{par:4,yards:[364],hcp:12},{par:3,yards:[170],hcp:18},{par:4,yards:[390],hcp:8},{par:5,yards:[522],hcp:14}]},
+
+  { id:112, region:"Lake County", type:"municipal", name:"Deerpath Golf Course", city:"Lake Forest, IL",
+    tees:[{name:"Blue",color:"#3366cc",yards:6308,rating:69.9,slope:120},{name:"White",color:"#fff",yards:5912,rating:68.0,slope:115},{name:"Red",color:"#cc3333",yards:5248,rating:69.7,slope:116}],
+    holes:[{par:4,yards:[380],hcp:5},{par:4,yards:[360],hcp:9},{par:3,yards:[172],hcp:17},{par:5,yards:[512],hcp:1},{par:4,yards:[390],hcp:3},{par:4,yards:[352],hcp:11},{par:3,yards:[164],hcp:15},{par:5,yards:[504],hcp:7},{par:4,yards:[398],hcp:13},{par:4,yards:[372],hcp:6},{par:4,yards:[358],hcp:10},{par:3,yards:[168],hcp:16},{par:5,yards:[516],hcp:2},{par:4,yards:[382],hcp:4},{par:4,yards:[350],hcp:12},{par:3,yards:[160],hcp:18},{par:4,yards:[376],hcp:8},{par:5,yards:[504],hcp:14}]},
+
+  { id:113, region:"Cook County", name:"Fox Run Golf Links", city:"Elk Grove Village, IL",
+    tees:[{name:"Blue",color:"#3366cc",yards:6501,rating:70.8,slope:122},{name:"White",color:"#fff",yards:6101,rating:68.9,slope:117},{name:"Red",color:"#cc3333",yards:5411,rating:70.6,slope:116}],
+    holes:[{par:4,yards:[392],hcp:5},{par:4,yards:[372],hcp:9},{par:3,yards:[178],hcp:17},{par:5,yards:[524],hcp:1},{par:4,yards:[402],hcp:3},{par:4,yards:[362],hcp:11},{par:3,yards:[168],hcp:15},{par:5,yards:[516],hcp:7},{par:4,yards:[408],hcp:13},{par:4,yards:[382],hcp:6},{par:4,yards:[368],hcp:10},{par:3,yards:[174],hcp:16},{par:5,yards:[528],hcp:2},{par:4,yards:[394],hcp:4},{par:4,yards:[360],hcp:12},{par:3,yards:[164],hcp:18},{par:4,yards:[386],hcp:8},{par:5,yards:[518],hcp:14}]},
+
+  { id:114, region:"Cook County", name:"Highland Woods Golf Course", city:"Hoffman Estates, IL",
+    tees:[{name:"Blue",color:"#3366cc",yards:6531,rating:71.1,slope:125},{name:"White",color:"#fff",yards:6131,rating:69.1,slope:120},{name:"Red",color:"#cc3333",yards:5441,rating:70.8,slope:118}],
+    holes:[{par:4,yards:[394],hcp:5},{par:4,yards:[374],hcp:9},{par:3,yards:[180],hcp:17},{par:5,yards:[526],hcp:1},{par:4,yards:[404],hcp:3},{par:4,yards:[364],hcp:11},{par:3,yards:[170],hcp:15},{par:5,yards:[518],hcp:7},{par:4,yards:[410],hcp:13},{par:4,yards:[384],hcp:6},{par:4,yards:[370],hcp:10},{par:3,yards:[176],hcp:16},{par:5,yards:[530],hcp:2},{par:4,yards:[396],hcp:4},{par:4,yards:[362],hcp:12},{par:3,yards:[166],hcp:18},{par:4,yards:[388],hcp:8},{par:5,yards:[520],hcp:14}]},
+
+  { id:115, region:"Cook County", name:"Bridges of Poplar Creek CC", city:"Hoffman Estates, IL",
+    tees:[{name:"Black",color:"#222",yards:6811,rating:72.7,slope:130},{name:"Blue",color:"#3366cc",yards:6401,rating:70.7,slope:125},{name:"White",color:"#fff",yards:5981,rating:68.7,slope:120},{name:"Red",color:"#cc3333",yards:5291,rating:70.4,slope:118}],
+    holes:[{par:4,yards:[410],hcp:5},{par:4,yards:[390],hcp:9},{par:3,yards:[186],hcp:17},{par:5,yards:[542],hcp:1},{par:4,yards:[420],hcp:3},{par:4,yards:[376],hcp:11},{par:3,yards:[176],hcp:15},{par:5,yards:[532],hcp:7},{par:4,yards:[416],hcp:13},{par:4,yards:[396],hcp:6},{par:4,yards:[384],hcp:10},{par:3,yards:[182],hcp:16},{par:5,yards:[548],hcp:2},{par:4,yards:[414],hcp:4},{par:4,yards:[374],hcp:12},{par:3,yards:[172],hcp:18},{par:4,yards:[404],hcp:8},{par:5,yards:[536],hcp:14}]},
+
+  { id:116, region:"Kane County", type:"municipal", name:"Bartlett Hills Golf Club", city:"Bartlett, IL",
+    tees:[{name:"Blue",color:"#3366cc",yards:6327,rating:70.2,slope:124},{name:"White",color:"#fff",yards:5937,rating:68.2,slope:119},{name:"Red",color:"#cc3333",yards:5271,rating:70.0,slope:117}],
+    holes:[{par:4,yards:[382],hcp:5},{par:4,yards:[362],hcp:9},{par:3,yards:[174],hcp:17},{par:5,yards:[514],hcp:1},{par:4,yards:[392],hcp:3},{par:4,yards:[354],hcp:11},{par:3,yards:[166],hcp:15},{par:5,yards:[506],hcp:7},{par:4,yards:[400],hcp:13},{par:4,yards:[374],hcp:6},{par:4,yards:[360],hcp:10},{par:3,yards:[170],hcp:16},{par:5,yards:[518],hcp:2},{par:4,yards:[384],hcp:4},{par:4,yards:[352],hcp:12},{par:3,yards:[162],hcp:18},{par:4,yards:[378],hcp:8},{par:5,yards:[506],hcp:14}]},
+
+  { id:117, region:"DuPage County", name:"Carriage Greens Country Club", city:"Darien, IL",
+    tees:[{name:"Blue",color:"#3366cc",yards:6467,rating:70.9,slope:122},{name:"White",color:"#fff",yards:6071,rating:69.0,slope:117},{name:"Red",color:"#cc3333",yards:5393,rating:70.7,slope:116}],
+    holes:[{par:4,yards:[390],hcp:5},{par:4,yards:[370],hcp:9},{par:3,yards:[178],hcp:17},{par:5,yards:[522],hcp:1},{par:4,yards:[400],hcp:3},{par:4,yards:[360],hcp:11},{par:3,yards:[168],hcp:15},{par:5,yards:[514],hcp:7},{par:4,yards:[406],hcp:13},{par:4,yards:[380],hcp:6},{par:4,yards:[366],hcp:10},{par:3,yards:[174],hcp:16},{par:5,yards:[526],hcp:2},{par:4,yards:[392],hcp:4},{par:4,yards:[358],hcp:12},{par:3,yards:[164],hcp:18},{par:4,yards:[384],hcp:8},{par:5,yards:[516],hcp:14}]},
+
+  { id:118, region:"DuPage County", name:"Oak Brook Golf Club", city:"Oak Brook, IL",
+    tees:[{name:"Blue",color:"#3366cc",yards:6466,rating:71.1,slope:125},{name:"White",color:"#fff",yards:6072,rating:69.1,slope:120},{name:"Red",color:"#cc3333",yards:5394,rating:70.8,slope:118}],
+    holes:[{par:4,yards:[390],hcp:5},{par:4,yards:[370],hcp:9},{par:3,yards:[178],hcp:17},{par:5,yards:[522],hcp:1},{par:4,yards:[400],hcp:3},{par:4,yards:[360],hcp:11},{par:3,yards:[168],hcp:15},{par:5,yards:[514],hcp:7},{par:4,yards:[406],hcp:13},{par:4,yards:[380],hcp:6},{par:4,yards:[366],hcp:10},{par:3,yards:[174],hcp:16},{par:5,yards:[526],hcp:2},{par:4,yards:[392],hcp:4},{par:4,yards:[358],hcp:12},{par:3,yards:[164],hcp:18},{par:4,yards:[384],hcp:8},{par:5,yards:[516],hcp:14}]},
+
+  { id:119, region:"Cook County", type:"municipal", name:"Glencoe Golf Club", city:"Glencoe, IL",
+    tees:[{name:"Blue",color:"#3366cc",yards:6258,rating:69.4,slope:119},{name:"White",color:"#fff",yards:5862,rating:67.5,slope:114},{name:"Red",color:"#cc3333",yards:5208,rating:69.2,slope:114}],
+    holes:[{par:4,yards:[376],hcp:5},{par:4,yards:[356],hcp:9},{par:3,yards:[168],hcp:17},{par:5,yards:[508],hcp:1},{par:4,yards:[386],hcp:3},{par:4,yards:[348],hcp:11},{par:3,yards:[160],hcp:15},{par:5,yards:[500],hcp:7},{par:4,yards:[394],hcp:13},{par:4,yards:[368],hcp:6},{par:4,yards:[354],hcp:10},{par:3,yards:[164],hcp:16},{par:5,yards:[512],hcp:2},{par:4,yards:[378],hcp:4},{par:4,yards:[346],hcp:12},{par:3,yards:[156],hcp:18},{par:4,yards:[372],hcp:8},{par:5,yards:[499],hcp:14}]},
+
+  { id:120, region:"Cook County", name:"Glenview Park Golf Club", city:"Glenview, IL",
+    tees:[{name:"Blue",color:"#3366cc",yards:6597,rating:71.6,slope:125},{name:"White",color:"#fff",yards:6197,rating:69.7,slope:120},{name:"Red",color:"#cc3333",yards:5497,rating:71.3,slope:119}],
+    holes:[{par:4,yards:[398],hcp:5},{par:4,yards:[378],hcp:9},{par:3,yards:[182],hcp:17},{par:5,yards:[532],hcp:1},{par:4,yards:[408],hcp:3},{par:4,yards:[368],hcp:11},{par:3,yards:[172],hcp:15},{par:5,yards:[522],hcp:7},{par:4,yards:[414],hcp:13},{par:4,yards:[388],hcp:6},{par:4,yards:[376],hcp:10},{par:3,yards:[178],hcp:16},{par:5,yards:[538],hcp:2},{par:4,yards:[400],hcp:4},{par:4,yards:[366],hcp:12},{par:3,yards:[168],hcp:18},{par:4,yards:[392],hcp:8},{par:5,yards:[524],hcp:14}]},
+
+  { id:121, region:"Cook County", type:"municipal", name:"Deerfield Golf Club", city:"Deerfield, IL",
+    tees:[{name:"Blue",color:"#3366cc",yards:6296,rating:69.8,slope:118},{name:"White",color:"#fff",yards:5900,rating:67.8,slope:113},{name:"Red",color:"#cc3333",yards:5234,rating:69.6,slope:114}],
+    holes:[{par:4,yards:[379],hcp:5},{par:4,yards:[360],hcp:9},{par:3,yards:[171],hcp:17},{par:5,yards:[511],hcp:1},{par:4,yards:[389],hcp:3},{par:4,yards:[351],hcp:11},{par:3,yards:[163],hcp:15},{par:5,yards:[503],hcp:7},{par:4,yards:[397],hcp:13},{par:4,yards:[371],hcp:6},{par:4,yards:[357],hcp:10},{par:3,yards:[167],hcp:16},{par:5,yards:[515],hcp:2},{par:4,yards:[381],hcp:4},{par:4,yards:[349],hcp:12},{par:3,yards:[159],hcp:18},{par:4,yards:[375],hcp:8},{par:5,yards:[502],hcp:14}]},
+
+  { id:122, region:"Cook County", name:"Arlington Lakes Golf Club", city:"Arlington Heights, IL",
+    tees:[{name:"Blue",color:"#3366cc",yards:6551,rating:71.3,slope:124},{name:"White",color:"#fff",yards:6151,rating:69.3,slope:119},{name:"Red",color:"#cc3333",yards:5461,rating:71.0,slope:118}],
+    holes:[{par:4,yards:[396],hcp:5},{par:4,yards:[376],hcp:9},{par:3,yards:[182],hcp:17},{par:5,yards:[528],hcp:1},{par:4,yards:[406],hcp:3},{par:4,yards:[366],hcp:11},{par:3,yards:[174],hcp:15},{par:5,yards:[520],hcp:7},{par:4,yards:[412],hcp:13},{par:4,yards:[386],hcp:6},{par:4,yards:[374],hcp:10},{par:3,yards:[178],hcp:16},{par:5,yards:[534],hcp:2},{par:4,yards:[398],hcp:4},{par:4,yards:[364],hcp:12},{par:3,yards:[170],hcp:18},{par:4,yards:[390],hcp:8},{par:5,yards:[522],hcp:14}]},
+
+  { id:123, region:"Cook County", name:"Buffalo Grove Golf Course", city:"Buffalo Grove, IL",
+    tees:[{name:"Blue",color:"#3366cc",yards:6398,rating:70.4,slope:120},{name:"White",color:"#fff",yards:6000,rating:68.4,slope:115},{name:"Red",color:"#cc3333",yards:5326,rating:70.2,slope:114}],
+    holes:[{par:4,yards:[386],hcp:5},{par:4,yards:[366],hcp:9},{par:3,yards:[174],hcp:17},{par:5,yards:[516],hcp:1},{par:4,yards:[396],hcp:3},{par:4,yards:[356],hcp:11},{par:3,yards:[164],hcp:15},{par:5,yards:[508],hcp:7},{par:4,yards:[402],hcp:13},{par:4,yards:[376],hcp:6},{par:4,yards:[362],hcp:10},{par:3,yards:[170],hcp:16},{par:5,yards:[520],hcp:2},{par:4,yards:[388],hcp:4},{par:4,yards:[354],hcp:12},{par:3,yards:[160],hcp:18},{par:4,yards:[382],hcp:8},{par:5,yards:[510],hcp:14}]},
+
+  { id:124, region:"Cook County", name:"Foxford Hills Golf Club", city:"Cary, IL",
+    tees:[{name:"Black",color:"#222",yards:6841,rating:72.7,slope:133},{name:"Blue",color:"#3366cc",yards:6427,rating:70.7,slope:127},{name:"White",color:"#fff",yards:6005,rating:68.6,slope:122},{name:"Red",color:"#cc3333",yards:5315,rating:70.4,slope:120}],
+    holes:[{par:4,yards:[412],hcp:5},{par:4,yards:[392],hcp:9},{par:3,yards:[188],hcp:17},{par:5,yards:[544],hcp:1},{par:4,yards:[422],hcp:3},{par:4,yards:[378],hcp:11},{par:3,yards:[178],hcp:15},{par:5,yards:[534],hcp:7},{par:4,yards:[418],hcp:13},{par:4,yards:[398],hcp:6},{par:4,yards:[386],hcp:10},{par:3,yards:[184],hcp:16},{par:5,yards:[550],hcp:2},{par:4,yards:[416],hcp:4},{par:4,yards:[376],hcp:12},{par:3,yards:[174],hcp:18},{par:4,yards:[406],hcp:8},{par:5,yards:[538],hcp:14}]},
+
+  { id:125, region:"DuPage County", type:"municipal", name:"Lombard Golf Course", city:"Lombard, IL",
+    tees:[{name:"White",color:"#fff",yards:3162,rating:34.6,slope:109},{name:"Red",color:"#cc3333",yards:2874,rating:36.2,slope:111}],
+    holes:[{par:4,yards:[355],hcp:1},{par:3,yards:[152],hcp:9},{par:4,yards:[310],hcp:5},{par:4,yards:[318],hcp:3},{par:3,yards:[174],hcp:7},{par:5,yards:[480],hcp:2},{par:3,yards:[145],hcp:8},{par:4,yards:[338],hcp:6},{par:4,yards:[490],hcp:4}]},
+
+  { id:126, region:"DuPage County", type:"municipal", name:"Willow Crest Golf Club", city:"Oak Brook, IL",
+    tees:[{name:"Blue",color:"#3366cc",yards:6274,rating:69.6,slope:118},{name:"White",color:"#fff",yards:5882,rating:67.6,slope:113},{name:"Red",color:"#cc3333",yards:5218,rating:69.4,slope:112}],
+    holes:[{par:4,yards:[378],hcp:5},{par:4,yards:[358],hcp:9},{par:3,yards:[168],hcp:17},{par:5,yards:[508],hcp:1},{par:4,yards:[388],hcp:3},{par:4,yards:[350],hcp:11},{par:3,yards:[160],hcp:15},{par:5,yards:[500],hcp:7},{par:4,yards:[396],hcp:13},{par:4,yards:[370],hcp:6},{par:4,yards:[356],hcp:10},{par:3,yards:[164],hcp:16},{par:5,yards:[512],hcp:2},{par:4,yards:[380],hcp:4},{par:4,yards:[348],hcp:12},{par:3,yards:[156],hcp:18},{par:4,yards:[374],hcp:8},{par:5,yards:[497],hcp:14}]},
+
+  { id:127, region:"DuPage County", type:"municipal", name:"Green Meadows Golf Course", city:"Westmont, IL",
+    tees:[{name:"White",color:"#fff",yards:5834,rating:67.2,slope:110},{name:"Red",color:"#cc3333",yards:5184,rating:69.1,slope:112}],
+    holes:[{par:4,yards:[352],hcp:5},{par:4,yards:[334],hcp:9},{par:3,yards:[158],hcp:17},{par:5,yards:[484],hcp:1},{par:4,yards:[362],hcp:3},{par:4,yards:[326],hcp:11},{par:3,yards:[150],hcp:15},{par:5,yards:[476],hcp:7},{par:4,yards:[372],hcp:13},{par:4,yards:[346],hcp:6},{par:4,yards:[332],hcp:10},{par:3,yards:[154],hcp:16},{par:5,yards:[488],hcp:2},{par:4,yards:[355],hcp:4},{par:4,yards:[324],hcp:12},{par:3,yards:[147],hcp:18},{par:4,yards:[349],hcp:8},{par:5,yards:[476],hcp:14}]},
+
+  { id:128, region:"Kane County", name:"Blackberry Oaks Golf Course", city:"Bristol, IL",
+    tees:[{name:"Black",color:"#222",yards:6621,rating:71.5,slope:131},{name:"Blue",color:"#3366cc",yards:6221,rating:69.5,slope:125},{name:"White",color:"#fff",yards:5801,rating:67.5,slope:120},{name:"Red",color:"#cc3333",yards:5137,rating:69.2,slope:117}],
+    holes:[{par:4,yards:[400],hcp:5},{par:4,yards:[380],hcp:9},{par:3,yards:[180],hcp:17},{par:5,yards:[530],hcp:1},{par:4,yards:[410],hcp:3},{par:4,yards:[368],hcp:11},{par:3,yards:[170],hcp:15},{par:5,yards:[520],hcp:7},{par:4,yards:[414],hcp:13},{par:4,yards:[390],hcp:6},{par:4,yards:[376],hcp:10},{par:3,yards:[176],hcp:16},{par:5,yards:[534],hcp:2},{par:4,yards:[402],hcp:4},{par:4,yards:[366],hcp:12},{par:3,yards:[166],hcp:18},{par:4,yards:[394],hcp:8},{par:5,yards:[520],hcp:14}]},
+
+  { id:129, region:"Lake County", name:"Chalet Hills Golf Club", city:"Cary, IL",
+    tees:[{name:"Black",color:"#222",yards:6812,rating:72.6,slope:132},{name:"Blue",color:"#3366cc",yards:6398,rating:70.5,slope:126},{name:"White",color:"#fff",yards:5976,rating:68.5,slope:121},{name:"Red",color:"#cc3333",yards:5290,rating:70.2,slope:119}],
+    holes:[{par:4,yards:[410],hcp:5},{par:4,yards:[390],hcp:9},{par:3,yards:[186],hcp:17},{par:5,yards:[542],hcp:1},{par:4,yards:[420],hcp:3},{par:4,yards:[376],hcp:11},{par:3,yards:[176],hcp:15},{par:5,yards:[532],hcp:7},{par:4,yards:[416],hcp:13},{par:4,yards:[396],hcp:6},{par:4,yards:[384],hcp:10},{par:3,yards:[182],hcp:16},{par:5,yards:[548],hcp:2},{par:4,yards:[414],hcp:4},{par:4,yards:[374],hcp:12},{par:3,yards:[172],hcp:18},{par:4,yards:[404],hcp:8},{par:5,yards:[536],hcp:14}]},
+
+  { id:130, region:"Cook County", name:"Anetsberger Golf Course", city:"Northbrook, IL",
+    tees:[{name:"Blue",color:"#3366cc",yards:6271,rating:69.5,slope:119},{name:"White",color:"#fff",yards:5875,rating:67.5,slope:114},{name:"Red",color:"#cc3333",yards:5213,rating:69.3,slope:113}],
+    holes:[{par:4,yards:[378],hcp:5},{par:4,yards:[358],hcp:9},{par:3,yards:[168],hcp:17},{par:5,yards:[508],hcp:1},{par:4,yards:[388],hcp:3},{par:4,yards:[350],hcp:11},{par:3,yards:[160],hcp:15},{par:5,yards:[500],hcp:7},{par:4,yards:[396],hcp:13},{par:4,yards:[370],hcp:6},{par:4,yards:[356],hcp:10},{par:3,yards:[164],hcp:16},{par:5,yards:[512],hcp:2},{par:4,yards:[380],hcp:4},{par:4,yards:[348],hcp:12},{par:3,yards:[156],hcp:18},{par:4,yards:[374],hcp:8},{par:5,yards:[501],hcp:14}]},
+
+  { id:131, region:"Cook County", name:"Apple Orchard Golf Course", city:"Bartlett, IL",
+    tees:[{name:"Blue",color:"#3366cc",yards:6388,rating:70.2,slope:122},{name:"White",color:"#fff",yards:5990,rating:68.3,slope:117},{name:"Red",color:"#cc3333",yards:5316,rating:70.0,slope:115}],
+    holes:[{par:4,yards:[386],hcp:5},{par:4,yards:[366],hcp:9},{par:3,yards:[174],hcp:17},{par:5,yards:[516],hcp:1},{par:4,yards:[396],hcp:3},{par:4,yards:[356],hcp:11},{par:3,yards:[164],hcp:15},{par:5,yards:[508],hcp:7},{par:4,yards:[402],hcp:13},{par:4,yards:[376],hcp:6},{par:4,yards:[362],hcp:10},{par:3,yards:[170],hcp:16},{par:5,yards:[520],hcp:2},{par:4,yards:[388],hcp:4},{par:4,yards:[354],hcp:12},{par:3,yards:[160],hcp:18},{par:4,yards:[382],hcp:8},{par:5,yards:[509],hcp:14}]},
+
+  { id:132, region:"Cook County", name:"Bliss Creek Golf Course", city:"Sugar Grove, IL",
+    tees:[{name:"Black",color:"#222",yards:6727,rating:72.1,slope:131},{name:"Blue",color:"#3366cc",yards:6327,rating:70.1,slope:125},{name:"White",color:"#fff",yards:5907,rating:68.1,slope:120},{name:"Red",color:"#cc3333",yards:5231,rating:69.8,slope:117}],
+    holes:[{par:4,yards:[406],hcp:5},{par:4,yards:[386],hcp:9},{par:3,yards:[182],hcp:17},{par:5,yards:[536],hcp:1},{par:4,yards:[416],hcp:3},{par:4,yards:[372],hcp:11},{par:3,yards:[172],hcp:15},{par:5,yards:[526],hcp:7},{par:4,yards:[412],hcp:13},{par:4,yards:[392],hcp:6},{par:4,yards:[378],hcp:10},{par:3,yards:[178],hcp:16},{par:5,yards:[542],hcp:2},{par:4,yards:[408],hcp:4},{par:4,yards:[370],hcp:12},{par:3,yards:[168],hcp:18},{par:4,yards:[398],hcp:8},{par:5,yards:[530],hcp:14}]},
+
+  { id:133, region:"Lake County", name:"Countryside Golf Club (Traditional)", city:"Mundelein, IL",
+    tees:[{name:"Blue",color:"#3366cc",yards:6502,rating:70.9,slope:122},{name:"White",color:"#fff",yards:6102,rating:69.0,slope:117},{name:"Red",color:"#cc3333",yards:5412,rating:70.7,slope:115}],
+    holes:[{par:4,yards:[392],hcp:5},{par:4,yards:[372],hcp:9},{par:3,yards:[178],hcp:17},{par:5,yards:[524],hcp:1},{par:4,yards:[402],hcp:3},{par:4,yards:[362],hcp:11},{par:3,yards:[168],hcp:15},{par:5,yards:[516],hcp:7},{par:4,yards:[408],hcp:13},{par:4,yards:[382],hcp:6},{par:4,yards:[368],hcp:10},{par:3,yards:[174],hcp:16},{par:5,yards:[528],hcp:2},{par:4,yards:[394],hcp:4},{par:4,yards:[360],hcp:12},{par:3,yards:[164],hcp:18},{par:4,yards:[386],hcp:8},{par:5,yards:[520],hcp:14}]},
+
+  { id:134, region:"Cook County", name:"Prairie Landing Golf Club", city:"West Chicago, IL",
+    tees:[{name:"Black",color:"#222",yards:6996,rating:73.5,slope:138},{name:"Blue",color:"#3366cc",yards:6545,rating:71.4,slope:132},{name:"White",color:"#fff",yards:6075,rating:69.2,slope:126},{name:"Red",color:"#cc3333",yards:5395,rating:71.1,slope:124}],
+    holes:[{par:4,yards:[422],hcp:5},{par:4,yards:[402],hcp:9},{par:3,yards:[192],hcp:17},{par:5,yards:[548],hcp:1},{par:4,yards:[432],hcp:3},{par:4,yards:[386],hcp:11},{par:3,yards:[182],hcp:15},{par:5,yards:[538],hcp:7},{par:4,yards:[424],hcp:13},{par:4,yards:[408],hcp:6},{par:4,yards:[394],hcp:10},{par:3,yards:[188],hcp:16},{par:5,yards:[554],hcp:2},{par:4,yards:[426],hcp:4},{par:4,yards:[384],hcp:12},{par:3,yards:[178],hcp:18},{par:4,yards:[416],hcp:8},{par:5,yards:[542],hcp:14}]},
+
 ];
 
 const CLUB_TYPES = ['Driver','3-Wood','5-Wood','7-Wood','2-Hybrid','3-Hybrid','4-Hybrid','5-Hybrid','2-Iron','3-Iron','4-Iron','5-Iron','6-Iron','7-Iron','8-Iron','9-Iron','PW','GW','SW','LW','Putter'];
@@ -2769,6 +2998,7 @@ function renderCourseList(q = '') {
     if (activeFilter === 'all')       return true;
     if (activeFilter === 'CA')        return getCourseState(c) === 'CA';
     if (activeFilter === 'AZ')        return getCourseState(c) === 'AZ';
+    if (activeFilter === 'IL')        return getCourseState(c) === 'IL';
     if (activeFilter === 'municipal') return c.type === 'municipal';
     if (activeFilter === 'executive') return c.type === 'executive' || c.type === 'par3';
     return false;
@@ -2789,7 +3019,7 @@ function renderCourseList(q = '') {
     byState[st].push(c);
   });
 
-  const stateLabels = { CA: '🐻 California', AZ: '🌵 Arizona' };
+  const stateLabels = { CA: '🐻 California', AZ: '🌵 Arizona', IL: '🦅 Illinois' };
 
   list.innerHTML = Object.entries(byState)
     .sort(([a],[b]) => a.localeCompare(b))
@@ -2803,7 +3033,7 @@ function renderCourseList(q = '') {
         const isKV      = c._source === 'community';
         const badge     = isKV ? '<span class="course-type-badge badge-municipal" style="opacity:0.7">Community<\/span>' : '';
 
-        return `<div class="course-item" onclick="selectCourseObj(${encodeURIComponent(JSON.stringify({id:c.id,name:c.name,_source:c._source}))})">
+        return `<div class="course-item" data-course-id="${c.id}" data-course-source="${c._source || 'builtin'}" onclick="selectCourseByIdx(this)">
           <div style="flex:1;min-width:0">
             <div class="course-name">${c.name}<\/div>
             <div class="course-meta">${c.city} · ${holeCount} holes · Par ${par}${yardStr ? ' · ' + yardStr : ''}<\/div>
@@ -2819,6 +3049,25 @@ function renderCourseList(q = '') {
       const header = stateLabels[st] || st;
       return `<div class="region-header">${header}<\/div>${rows}`;
     }).join('');
+}
+
+function selectCourseByIdx(el) {
+  const id     = el.getAttribute('data-course-id');
+  const source = el.getAttribute('data-course-source');
+  let course;
+  if (source === 'community') {
+    course = (state.customCourses || []).find(c => String(c.id) === String(id));
+  } else {
+    course = COURSES.find(c => String(c.id) === String(id));
+  }
+  if (!course) return;
+  state.selectedCourse = course;
+  document.getElementById('tee-screen-title').textContent = course.name;
+  document.getElementById('tee-screen-sub').textContent   = course.city || '';
+  renderTeeOptions();
+  goToScreen('screen-tees');
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.nav-btn')[1].classList.add('active');
 }
 
 // Updated selectCourse — handles both built-in (numeric id) and community (string id) courses
@@ -2892,6 +3141,7 @@ function startRound() {
   saveState();
   renderHole();
   goToScreen('screen-round');
+  startGPS(); // begin GPS tracking for distance-to-green
   // Update nav
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.nav-btn')[1].classList.add('active');
@@ -3219,10 +3469,10 @@ function changePutts(d) {
 }
 
 function prevHole() {
-  if (state.currentHole > 0) { state.currentHole--; renderHole(); }
+  if (state.currentHole > 0) { state.currentHole--; renderHole(); onHoleChange(); }
 }
 function nextHole() {
-  if (state.currentHole < state.selectedCourse.holes.length - 1) { state.currentHole++; renderHole(); }
+  if (state.currentHole < state.selectedCourse.holes.length - 1) { state.currentHole++; renderHole(); onHoleChange(); }
 }
 
 function saveHole() {
@@ -3232,6 +3482,7 @@ function saveHole() {
     const hd = state.holeData[state.currentHole];
     if (hd.score === null) hd.score = state.selectedCourse.holes[state.currentHole].par;
     renderHole();
+    onHoleChange();
     document.getElementById('screen-round').scrollTop = 0;
   }
 }
@@ -3252,8 +3503,9 @@ const WHS_TABLE = [
   // [totalRounds, numUsed]
   [3,1],[4,1],[5,1],[6,2],[7,2],[8,2],[9,3],[10,3],
   [11,3],[12,4],[13,4],[14,4],[15,5],[16,6],[17,7],[18,8],
-  [19,8],[20,8]
+  [19,8],[20,8],
 ];
+
 
 /**
  * Determine if a round is a 9-hole round.
@@ -3393,6 +3645,7 @@ function get9HolePendingMessage() {
 
 
 function finishRound() {
+  stopGPS(); // stop GPS tracking
   saveState();
   const holes = state.selectedCourse.holes;
   const teeIdx = state.currentRound.teeIdx || 0;
@@ -4286,6 +4539,7 @@ function savePartialRound() {
 
 function cancelRound() {
   closeModal('end-round-modal');
+  stopGPS();
   state.currentRound  = null;
   state.holeData      = [];
   state.currentHole   = 0;
@@ -4632,6 +4886,244 @@ function calcNormalizedAvg(rounds) {
   return normalized.reduce((a, b) => a + b, 0) / normalized.length;
 }
 
+// ===== STROKES GAINED ENGINE =====
+// Based on Mark Broadie's methodology, calibrated for amateur golfers.
+// SG = (baseline strokes expected from position A) - (baseline strokes expected from position B) - 1
+// A positive SG means you did better than the baseline on that shot.
+
+// Expected strokes to hole out by distance (yards) — amateur baseline (~15 hdcp)
+// Interpolates between known values for any distance
+const SG_TABLE = {
+  // From tee on par 4/5 — expected score given remaining distance to hole
+  tee: [
+    [0,1],[10,1.05],[20,1.1],[30,1.2],[40,1.3],[50,1.42],
+    [75,1.65],[100,1.85],[125,2.05],[150,2.2],[175,2.38],
+    [200,2.55],[225,2.72],[250,2.88],[275,3.05],[300,3.2],
+    [350,3.5],[400,3.8],[450,4.1],[500,4.4],[550,4.7]
+  ],
+  // From fairway/rough — approach shots
+  approach: [
+    [0,1],[5,1.05],[10,1.1],[15,1.18],[20,1.26],[25,1.34],
+    [30,1.42],[40,1.56],[50,1.68],[60,1.8],[75,1.95],
+    [100,2.12],[125,2.28],[150,2.45],[175,2.65],[200,2.85],
+    [225,3.05],[250,3.25],[275,3.45],[300,3.65]
+  ],
+  // Putting — distance in FEET (our putt_detail stores feet)
+  putt: [
+    [1,1.01],[2,1.04],[3,1.08],[4,1.14],[5,1.2],[6,1.28],
+    [7,1.35],[8,1.42],[9,1.48],[10,1.54],[12,1.64],[15,1.75],
+    [20,1.87],[25,1.95],[30,2.02],[40,2.14],[50,2.22],[60,2.3]
+  ]
+};
+
+function sgLookup(table, dist) {
+  const rows = SG_TABLE[table];
+  if (!rows) return null;
+  if (dist <= rows[0][0]) return rows[0][1];
+  if (dist >= rows[rows.length-1][0]) return rows[rows.length-1][1];
+  // Linear interpolation
+  for (let i = 0; i < rows.length - 1; i++) {
+    const [d0, v0] = rows[i];
+    const [d1, v1] = rows[i+1];
+    if (dist >= d0 && dist <= d1) {
+      return v0 + (v1 - v0) * (dist - d0) / (d1 - d0);
+    }
+  }
+  return null;
+}
+
+// Classify a shot's lie category for SG lookup
+function getShotLie(shot, shotIdx, par) {
+  const outcome = shot.outcome || '';
+  if (shotIdx === 0) return 'tee';
+  if (['green','made'].includes(outcome)) return 'putt';
+  if (shot.distToPin <= 30) return 'approach'; // around green
+  return 'approach';
+}
+
+// Calculate strokes gained for all rounds with shot data
+function calcStrokesGained(rounds) {
+  const results = {
+    offTee:      { total: 0, count: 0, shots: [] },
+    approach:    { total: 0, count: 0, shots: [] },
+    aroundGreen: { total: 0, count: 0, shots: [] },
+    putting:     { total: 0, count: 0, shots: [] }
+  };
+
+  rounds.forEach(r => {
+    const holes    = r.holes || [];
+    const holePars = r.holePars || [];
+
+    holes.forEach((hd, holeIdx) => {
+      const par     = holePars[holeIdx] || 4;
+      const shots   = hd.shots || [];
+      const putts   = hd.putts_detail || [];
+
+      // ── Strokes Gained: Putting ─────────────────────────────────
+      // For each putt, SG = baseline(dist_ft) - putts_remaining
+      if (putts.length > 0) {
+        let puttsLeft = putts.length;
+        putts.forEach((p, pi) => {
+          const distFt   = p.dist || 0;
+          const baseline = sgLookup('putt', distFt);
+          if (baseline == null) return;
+          const sg = baseline - puttsLeft;
+          results.putting.total += sg;
+          results.putting.count++;
+          results.putting.shots.push({ sg, dist: distFt, hole: holeIdx + 1 });
+          puttsLeft--;
+        });
+      }
+
+      if (shots.length === 0) return;
+
+      // ── Strokes Gained: Off the Tee ────────────────────────────
+      // Shot 1 on par 4/5: SG = baseline(holeYards) - baseline(distAfterDrive) - 1
+      if (par >= 4 && shots.length >= 1) {
+        const shot1     = shots[0];
+        const holeYards = shot1.distToPin; // tee shot distToPin = hole length
+        const shot2dist = shots[1]?.distToPin; // where you ended up
+
+        if (holeYards && shot2dist != null) {
+          const baselineTee  = sgLookup('tee', holeYards);
+          const baselineAfter = sgLookup('approach', shot2dist);
+          if (baselineTee && baselineAfter) {
+            const sg = baselineTee - baselineAfter - 1;
+            results.offTee.total += sg;
+            results.offTee.count++;
+            results.offTee.shots.push({ sg, dist: holeYards, hole: holeIdx + 1 });
+          }
+        }
+      }
+
+      // ── Strokes Gained: Approach & Around the Green ─────────────
+      // Shots 2+ (excluding tee shot and putts)
+      const nonTeeShots = par >= 4 ? shots.slice(1) : shots;
+      nonTeeShots.forEach((shot, si) => {
+        const startDist = shot.distToPin;
+        // End position: next shot's distToPin, or 0 if it reached the green
+        const nextShot  = shots[si + (par >= 4 ? 2 : 1)];
+        const endDist   = nextShot?.distToPin ?? 0;
+
+        if (startDist == null) return;
+
+        const baselineStart = sgLookup('approach', startDist);
+        const baselineEnd   = endDist === 0
+          ? sgLookup('putt', 6) // assume 6ft putt if we reached green
+          : sgLookup('approach', endDist);
+
+        if (baselineStart == null || baselineEnd == null) return;
+
+        const sg = baselineStart - baselineEnd - 1;
+
+        if (startDist <= 30) {
+          results.aroundGreen.total += sg;
+          results.aroundGreen.count++;
+          results.aroundGreen.shots.push({ sg, dist: startDist, hole: holeIdx + 1 });
+        } else {
+          results.approach.total += sg;
+          results.approach.count++;
+          results.approach.shots.push({ sg, dist: startDist, hole: holeIdx + 1 });
+        }
+      });
+    });
+  });
+
+  // Calculate averages
+  Object.keys(results).forEach(k => {
+    const cat = results[k];
+    cat.avg = cat.count > 0 ? cat.total / cat.count : null;
+    cat.perRound = cat.count > 0
+      ? cat.total / Math.max(1, rounds.filter(r => (r.holes||[]).some(h => (h.shots||[]).length > 0)).length)
+      : null;
+  });
+
+  return results;
+}
+
+function renderStrokesGained(rounds) {
+  const card  = document.getElementById('sg-card');
+  const el    = document.getElementById('sg-stats');
+  const badge = document.getElementById('sg-shot-count');
+  if (!card || !el) return;
+
+  // Only show if we have rounds with shot data
+  const roundsWithShots = rounds.filter(r =>
+    (r.holes || []).some(h => (h.shots || []).length > 0)
+  );
+
+  if (roundsWithShots.length === 0) {
+    card.style.display = 'none';
+    return;
+  }
+
+  card.style.display = 'block';
+  const totalShots = roundsWithShots.reduce((s, r) =>
+    s + (r.holes||[]).reduce((s2, h) => s2 + (h.shots||[]).length, 0), 0);
+  if (badge) badge.textContent = `${totalShots} shots logged`;
+
+  const sg = calcStrokesGained(roundsWithShots);
+  const total = sg.offTee.total + sg.approach.total + sg.aroundGreen.total + sg.putting.total;
+  const totalRounds = roundsWithShots.length;
+
+  function sgBar(val, maxAbs) {
+    if (val == null) return '';
+    const pct   = Math.min(Math.abs(val) / maxAbs * 100, 100);
+    const color = val >= 0 ? '#6dd46d' : '#e87070';
+    const dir   = val >= 0 ? 'left' : 'right';
+    return `<div style="display:flex;align-items:center;gap:6px;margin-top:4px">
+      <div style="flex:1;height:6px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden">
+        <div style="width:${pct}%;height:100%;background:${color};border-radius:3px;${dir==='right'?'margin-left:auto':''}"></div>
+      </div>
+    </div>`;
+  }
+
+  function sgRow(label, icon, cat, maxAbs) {
+    if (cat.count === 0) return '';
+    const perRound = cat.perRound != null ? cat.perRound.toFixed(2) : '—';
+    const sign     = cat.perRound >= 0 ? '+' : '';
+    const color    = cat.perRound >= 0 ? '#6dd46d' : '#e87070';
+    return `
+      <div style="margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline">
+          <div style="font-size:13px">${icon} ${label}</div>
+          <div style="display:flex;gap:12px;align-items:baseline">
+            <span style="font-size:11px;opacity:0.4">${cat.count} shots</span>
+            <span style="font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:${color}">${sign}${perRound}</span>
+          </div>
+        </div>
+        ${sgBar(cat.perRound, maxAbs)}
+      </div>`;
+  }
+
+  const totalPerRound = totalRounds > 0 ? total / totalRounds : 0;
+  const totalSign     = totalPerRound >= 0 ? '+' : '';
+  const totalColor    = totalPerRound >= 0 ? '#6dd46d' : '#e87070';
+  const maxAbs        = 1.5; // max bar scale
+
+  el.innerHTML = `
+    <!-- Total SG banner -->
+    <div style="background:rgba(255,255,255,0.05);border-radius:12px;padding:12px 14px;margin-bottom:16px;text-align:center">
+      <div style="font-size:11px;opacity:0.5;margin-bottom:2px;text-transform:uppercase;letter-spacing:1px">Total SG / Round</div>
+      <div style="font-family:'Playfair Display',serif;font-size:42px;font-weight:900;color:${totalColor};line-height:1">${totalSign}${totalPerRound.toFixed(2)}</div>
+      <div style="font-size:11px;opacity:0.35;margin-top:4px">vs amateur baseline · ${roundsWithShots.length} round${roundsWithShots.length!==1?'s':''}</div>
+    </div>
+
+    <!-- Category breakdown -->
+    ${sgRow('Off the Tee', '🏌️', sg.offTee, maxAbs)}
+    ${sgRow('Approach', '🎯', sg.approach, maxAbs)}
+    ${sgRow('Around the Green', '⛳', sg.aroundGreen, maxAbs)}
+    ${sgRow('Putting', '🏴', sg.putting, maxAbs)}
+
+    <!-- Data quality note -->
+    ${totalShots < 50
+      ? `<div style="background:rgba(200,168,75,0.08);border:1px solid rgba(200,168,75,0.2);border-radius:10px;padding:10px 12px;font-size:11px;opacity:0.6;margin-top:8px">
+          📊 Log shot details on more holes for more accurate strokes gained data. ${50 - totalShots} more shots recommended.
+        </div>`
+      : ''}
+  `;
+}
+
 function renderStats() {
   const allRounds = state.rounds || [];
   const rounds    = getFilteredRounds();
@@ -4647,7 +5139,7 @@ function renderStats() {
 
   if (rounds.length === 0) {
     const empty = '<div style="opacity:0.4;text-align:center;padding:16px;font-size:13px">No rounds in this period<\/div>';
-    ['score-sparkline','score-trend-stats','scoring-breakdown','scoring-breakdown-summary','scoring-categories','putting-stats','fg-stats'].forEach(id => {
+    ['score-sparkline','score-trend-stats','scoring-breakdown','scoring-breakdown-summary','scoring-categories','putting-stats','fg-stats','sg-stats'].forEach(id => {
       const el = document.getElementById(id); if (el) el.innerHTML = empty;
     });
     ['tmc-putts-val','tmc-diff-val','tmc-fir-val','tmc-gir-val'].forEach(id => {
@@ -4903,6 +5395,9 @@ function renderStats() {
 
   // ── Scoring Categories ────────────────────────────────────────────
   renderScoringCategories(rounds);
+
+  // ── Strokes Gained ────────────────────────────────────────────────
+  renderStrokesGained(rounds);
 
   // ── Round history list ────────────────────────────────────────────
   renderAllRoundsList(allRounds);
@@ -6427,6 +6922,188 @@ function setDataStatus(msg, type) {
   el.textContent = msg;
   el.className = type === 'ok' ? 'data-status-ok' : 'data-status-err';
   setTimeout(() => { el.textContent = ''; el.className = ''; }, 5000);
+}
+
+// ===== GPS DISTANCE ENGINE =====
+// Haversine formula — returns distance in yards between two lat/lng points
+function haversineYards(lat1, lng1, lat2, lng2) {
+  const R    = 6371000; // Earth radius in metres
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a    = Math.sin(dLat/2) * Math.sin(dLat/2) +
+               Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) *
+               Math.sin(dLng/2) * Math.sin(dLng/2);
+  const metres = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return Math.round(metres * 1.09361); // metres → yards
+}
+
+// GPS state
+let gpsWatchId      = null;
+let gpsPosition     = null;  // current player position {lat, lng}
+let gpsGreenData    = {};    // { holeNum: {lat, lng} } for current course
+let gpsEnabled      = false;
+let gpsCourseId     = null;
+
+// Get a stable course ID for KV green lookups
+function getGpsCourseId(course) {
+  if (!course) return null;
+  if (course.id) return String(course.id);
+  return course.name.toLowerCase().replace(/[^a-z0-9]+/g,'-').slice(0,60);
+}
+
+// Start GPS tracking for the current round
+async function startGPS() {
+  if (!navigator.geolocation) {
+    setGpsStatus('GPS not available on this device');
+    return;
+  }
+
+  const course = state.selectedCourse;
+  if (!course) return;
+
+  gpsCourseId = getGpsCourseId(course);
+
+  // Load green coordinates from KV
+  await fetchGreenData(gpsCourseId);
+
+  // Start watching position
+  gpsEnabled  = true;
+  gpsWatchId  = navigator.geolocation.watchPosition(
+    pos => {
+      gpsPosition = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      updateGpsDisplay();
+    },
+    err => {
+      setGpsStatus(err.code === 1 ? 'Enable location access for distances' : 'GPS signal lost');
+    },
+    { enableHighAccuracy: true, maximumAge: 3000, timeout: 10000 }
+  );
+
+  showGpsCard();
+}
+
+function stopGPS() {
+  if (gpsWatchId !== null) {
+    navigator.geolocation.clearWatch(gpsWatchId);
+    gpsWatchId = null;
+  }
+  gpsEnabled  = false;
+  gpsPosition = null;
+  const card  = document.getElementById('gps-card');
+  if (card) card.style.display = 'none';
+}
+
+async function fetchGreenData(courseId) {
+  try {
+    const res  = await fetch(`${WORKER_URL}/greens/${encodeURIComponent(courseId)}`);
+    const data = await res.json();
+    gpsGreenData = data.holes || {};
+    const marked = Object.keys(gpsGreenData).length;
+    const total  = state.selectedCourse?.holes?.length || 18;
+    setGpsStatus(marked > 0
+      ? `${marked}/${total} greens mapped`
+      : 'No greens mapped yet — be the first!'
+    );
+  } catch(e) {
+    gpsGreenData = {};
+    setGpsStatus('Offline — cached green data only');
+  }
+}
+
+function showGpsCard() {
+  const card = document.getElementById('gps-card');
+  if (card) card.style.display = 'block';
+}
+
+function updateGpsDisplay() {
+  const holeNum  = String(state.currentHole + 1);
+  const green    = gpsGreenData[holeNum];
+  const yardsEl  = document.getElementById('gps-yards');
+  const labelEl  = document.getElementById('gps-label');
+  const markBtn  = document.getElementById('gps-mark-btn');
+
+  if (!gpsPosition) {
+    if (yardsEl) yardsEl.textContent = '—';
+    setGpsStatus('Acquiring GPS signal…');
+    return;
+  }
+
+  if (green) {
+    const yds = haversineYards(gpsPosition.lat, gpsPosition.lng, green.lat, green.lng);
+    if (yardsEl) yardsEl.textContent = yds;
+    if (labelEl) labelEl.textContent = yds <= 30 ? 'yards — you\'re on the green!' : 'yards to center';
+    // Show mark button if player is very close to the green (within 30 yds)
+    if (markBtn) markBtn.style.display = yds <= 30 ? 'block' : 'none';
+    setGpsStatus(green.markedAt
+      ? `Mapped ${new Date(green.markedAt).toLocaleDateString()}`
+      : '');
+  } else {
+    // No green data for this hole
+    if (yardsEl) yardsEl.textContent = '?';
+    if (labelEl) labelEl.textContent = 'green not mapped yet';
+    // Show mark button when player is likely on/near the green
+    if (markBtn) markBtn.style.display = 'block';
+    setGpsStatus('Walk to the center of the green and tap Mark Green');
+  }
+}
+
+function setGpsStatus(msg) {
+  const el = document.getElementById('gps-status');
+  if (el) el.textContent = msg;
+}
+
+// Called when player taps "Mark Green" on the green
+async function markGreen() {
+  if (!gpsPosition) {
+    alert('GPS position not available yet. Wait a moment and try again.');
+    return;
+  }
+
+  const holeNum  = state.currentHole + 1;
+  const courseId = gpsCourseId;
+  const name     = state.profile?.name || 'Anonymous';
+
+  const markBtn = document.getElementById('gps-mark-btn');
+  if (markBtn) { markBtn.textContent = 'Saving…'; markBtn.disabled = true; }
+
+  try {
+    const res = await fetch(
+      `${WORKER_URL}/greens/${encodeURIComponent(courseId)}/${holeNum}`,
+      {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({
+          lat:      gpsPosition.lat,
+          lng:      gpsPosition.lng,
+          markedBy: name
+        })
+      }
+    );
+    const data = await res.json();
+
+    if (data.ok) {
+      // Update local cache
+      gpsGreenData[String(holeNum)] = data.green;
+      updateGpsDisplay();
+      setGpsStatus(`✓ Hole ${holeNum} green saved for everyone!`);
+      if (markBtn) { markBtn.textContent = '✓ Marked'; markBtn.disabled = false; markBtn.style.display = 'none'; }
+    } else {
+      throw new Error(data.error || 'Save failed');
+    }
+  } catch(e) {
+    // Save locally even if KV fails
+    gpsGreenData[String(holeNum)] = { lat: gpsPosition.lat, lng: gpsPosition.lng, markedAt: new Date().toISOString() };
+    updateGpsDisplay();
+    if (markBtn) { markBtn.textContent = 'Mark Green'; markBtn.disabled = false; }
+    setGpsStatus('Saved locally — will sync when online');
+  }
+}
+
+// Called when navigating to a new hole during a round
+function onHoleChange() {
+  updateGpsDisplay();
+  const markBtn = document.getElementById('gps-mark-btn');
+  if (markBtn) { markBtn.textContent = 'Mark Green'; markBtn.disabled = false; }
 }
 
 // ===== INIT =====
