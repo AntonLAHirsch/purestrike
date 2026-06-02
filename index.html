@@ -7559,10 +7559,25 @@ function advPopulateClubSelect() {
   const sel   = document.getElementById('adv-club-select');
   if (!sel) return;
   const clubs = state.profile?.clubs || [];
-  const types = ['Driver','3-Wood','5-Wood','7-Wood','2-Hybrid','3-Hybrid','4-Hybrid','5-Hybrid','2-Iron','3-Iron','4-Iron','5-Iron','6-Iron','7-Iron','8-Iron','9-Iron','PW','GW','SW','LW'];
-  const options = clubs.length > 0
-    ? clubs.map(c => `<option value="${c.name}">${c.name}<\/option>`).join('')
-    : types.map(t => `<option value="${t}">${t}<\/option>`).join('');
+
+  let options;
+  if (clubs.length > 0) {
+    // Clubs from the bag builder: { type, brand, model, dist }
+    options = clubs.map(c => {
+      const label = c.brand && c.model
+        ? `${c.brand} ${c.model} (${c.type})`
+        : c.type || 'Unknown';
+      const value = c.brand && c.model
+        ? `${c.brand} ${c.model}`
+        : c.type || '';
+      return `<option value="${value}">${label}<\/option>`;
+    }).join('');
+  } else {
+    // No bag set up — fall back to standard club types
+    const types = ['Driver','3-Wood','5-Wood','7-Wood','2-Hybrid','3-Hybrid','4-Hybrid','5-Hybrid','3-Iron','4-Iron','5-Iron','6-Iron','7-Iron','8-Iron','9-Iron','PW','GW','SW','LW'];
+    options = types.map(t => `<option value="${t}">${t}<\/option>`).join('');
+  }
+
   sel.innerHTML = '<option value="">Choose club…<\/option>' + options;
 }
 
