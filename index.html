@@ -5609,6 +5609,119 @@ function confirmSharedCourse(courseIdx, resultsId, teeIdx, context) {
   applyCourseToContext(course, parseInt(teeIdx), context);
 }
 
+// ── AI COURSE LOOKUP ─────────────────────────────────────────────
+// Shared with PurePlay. Calls Claude Haiku to return real hole pars
+// and stroke indexes for any course it knows. Falls back gracefully.
+
+async function lookupCourseAI(name, city) {
+  const prompt = `You are a golf course database. Return ONLY a valid JSON object (no markdown, no explanation) for the golf course named "${name}"${city ? ' in ' + city : ''}.
+
+JSON structure:
+{
+  "name": "Full official course name",
+  "city": "City, ST",
+  "state": "ST",
+  "holes": [
+    { "hole": 1, "par": 4, "hcp": 7 },
+    ... all 18 holes ...
+  ],
+  "tees": [
+    { "name": "Black", "color": "#222222", "yards": 7200, "rating": 74.5, "slope": 138 },
+    { "name": "Blue",  "color": "#3366cc", "yards": 6700, "rating": 72.1, "slope": 132 },
+    { "name": "White", "color": "#ffffff", "yards": 6200, "rating": 69.8, "slope": 125 },
+    { "name": "Red",   "color": "#cc3333", "yards": 5600, "rating": 71.2, "slope": 120 }
+  ]
+}
+
+Rules:
+- holes must have all 18 entries (or 9 for a 9-hole course)
+- hcp is the REAL stroke index for that hole (1=hardest, 18=easiest)
+- Include all real tee sets with accurate yardage, rating, slope
+- Use only these tee colors: #222222 (Black), #3366cc (Blue), #ffffff (White), #cc3333 (Red), #c8a84b (Gold), #4a9a4a (Green)
+- If you do NOT know this specific course, return exactly: {"unknown":true}
+- Return ONLY the JSON`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1200,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await res.json();
+    const text = (data.content?.[0]?.text || '').trim().replace(/```json|```/g, '').trim();
+    const json = JSON.parse(text);
+    if (json.unknown || !json.holes || json.holes.length < 9) return null;
+    return json;
+  } catch(e) {
+    console.warn('AI course lookup failed:', e);
+    return null;
+  }
+}
+
+// Renders the manual entry form with an AI lookup button injected at the top.
+// Called when a course search returns no results or user clicks "Course not listed".
+function showCourseManualEntryPrompt(prefillName, resultsId, context, message) {
+  const el = document.getElementById(resultsId);
+  if (!el) return;
+  el.innerHTML = `
+    <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">${message || 'Add this course:'}</div>
+    <div id="ps-ai-result-${resultsId}" style="display:none;margin-bottom:12px;"></div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <input id="gk-manual-name" class="field-input" placeholder="Course name *" value="${prefillName || ''}"/>
+      <input id="gk-manual-city" class="field-input" placeholder="City, ST (e.g. Pebble Beach, CA)"/>
+      <button class="modal-btn secondary" onclick="runPSAILookup('${resultsId}','${context}')" id="ps-lookup-btn-${resultsId}" style="margin-top:0;">
+        ✦ Look up scorecard
+      </button>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <input id="gk-manual-par"    class="field-input" type="number" placeholder="Par (72)"/>
+        <input id="gk-manual-yards"  class="field-input" type="number" placeholder="Yards (6500)"/>
+        <input id="gk-manual-rating" class="field-input" type="number" step="0.1" placeholder="Rating (72.0)"/>
+        <input id="gk-manual-slope"  class="field-input" type="number" placeholder="Slope (113)"/>
+      </div>
+      <input id="gk-manual-tee" class="field-input" placeholder="Tee name (e.g. Blue)"/>
+      <button class="modal-btn" onclick="saveManualCourseEntry('${resultsId}','${context}')">Save & use this course →</button>
+    </div>`;
+}
+
+// AI lookup triggered from within the PureStrike manual entry form
+let _psAiData = {};
+async function runPSAILookup(resultsId, context) {
+  const name = document.getElementById('gk-manual-name')?.value?.trim();
+  const city = document.getElementById('gk-manual-city')?.value?.trim() || '';
+  if (!name) { alert('Enter a course name first'); return; }
+
+  const btn = document.getElementById(`ps-lookup-btn-${resultsId}`);
+  const resultEl = document.getElementById(`ps-ai-result-${resultsId}`);
+  if (btn) { btn.textContent = 'Looking up…'; btn.disabled = true; }
+  if (resultEl) resultEl.style.display = 'block';
+  if (resultEl) resultEl.innerHTML = '<div style="font-size:13px;color:var(--flag);">Searching for scorecard…</div>';
+
+  const result = await lookupCourseAI(name, city);
+
+  if (btn) { btn.textContent = '✦ Look up scorecard'; btn.disabled = false; }
+
+  if (result) {
+    _psAiData[resultsId] = result;
+    const par = result.holes.reduce((s,h) => s+h.par, 0);
+    // Pre-fill form fields
+    document.getElementById('gk-manual-par').value    = par;
+    if (result.tees?.[0]) {
+      document.getElementById('gk-manual-tee').value    = result.tees[0].name || '';
+      document.getElementById('gk-manual-rating').value = result.tees[0].rating || '';
+      document.getElementById('gk-manual-slope').value  = result.tees[0].slope || '';
+      document.getElementById('gk-manual-yards').value  = result.tees[0].yards || '';
+    }
+    if (resultEl) resultEl.innerHTML = `<div style="font-size:13px;color:#4a9a4a;">✓ Scorecard found — ${result.holes.length} holes, Par ${par}. Fields pre-filled. Confirm and save below.</div>`;
+  } else {
+    _psAiData[resultsId] = null;
+    if (resultEl) resultEl.innerHTML = '<div style="font-size:13px;color:var(--muted);">Scorecard not found — fill in the details manually below.</div>';
+  }
+}
+
 async function saveManualCourseEntry(resultsId, context) {
   const name   = document.getElementById('gk-manual-name')?.value?.trim();
   const city   = document.getElementById('gk-manual-city')?.value?.trim() || '';
@@ -5620,28 +5733,34 @@ async function saveManualCourseEntry(resultsId, context) {
 
   if (!name) { alert('Please enter a course name'); return; }
 
-  // Build holes array — distribute pars evenly
   const holeCount = par <= 36 ? 9 : 18;
-  const holes = buildDefaultHoles(holeCount, par);
+  const aiData = _psAiData?.[resultsId];
+
+  // Use AI holes if available, otherwise synthetic defaults
+  const holes = aiData?.holes
+    ? aiData.holes.map(h => ({ hole: h.hole, par: h.par, yards: [0], hcp: h.hcp }))
+    : buildDefaultHoles(holeCount, par);
+
+  // Use all AI tees if available, otherwise just the one the user entered
+  const tees = aiData?.tees?.length
+    ? aiData.tees
+    : [{ name: tee, color: '#3366cc', yards, rating, slope }];
 
   const course = {
     name, city,
     state:  extractStateFromCity(city),
     region: 'Community',
     type:   holeCount <= 9 ? 'executive' : 'regulation',
-    tees:   [{ name: tee, color: '#3366cc', yards, rating, slope }],
-    holes,
+    tees, holes,
     holePars: holes.map(h => h.par)
   };
 
-  // Save btn feedback
   const btn = document.querySelector(`#${resultsId} .modal-btn`) ||
     document.querySelector('[onclick*="saveManualCourseEntry"]');
   if (btn) { btn.textContent = 'Saving…'; btn.disabled = true; }
 
   try {
-    // Push to shared Cloudflare KV
-    const res  = await fetch(`${WORKER_URL}/course`, {
+    const res = await fetch(`${WORKER_URL}/course`, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify(course)
@@ -5649,11 +5768,9 @@ async function saveManualCourseEntry(resultsId, context) {
     const data = await res.json();
     if (data.id) course.id = data.id;
   } catch(e) {
-    // Worker unreachable — still use locally, just won't be shared
     course.id = 'local_' + Date.now();
   }
 
-  // Save locally too
   if (!state.customCourses) state.customCourses = [];
   const exists = state.customCourses.findIndex(c => c.name === course.name && c.city === course.city);
   if (exists >= 0) state.customCourses[exists] = course;
