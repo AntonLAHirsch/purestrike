@@ -765,8 +765,8 @@
     <div class="filter-tabs" id="filter-tabs">
       <button class="filter-tab on"  onclick="setFilter('all',this)">All</button>
       <button class="filter-tab"     onclick="setFilter('CA',this)">🐻 California</button>
-      <button class="filter-tab"     onclick="setFilter('AZ',this)">🌵 Arizona</button>
       <button class="filter-tab"     onclick="setFilter('IL',this)">🦅 Illinois</button>
+      <button class="filter-tab"     onclick="setFilter('MA',this)">🦞 Massachusetts</button>
       <button class="filter-tab"     onclick="setFilter('municipal',this)">🏛 Municipal</button>
       <button class="filter-tab"     onclick="setFilter('executive',this)">⚡ Executive</button>
     </div>
@@ -1097,7 +1097,6 @@
 <!-- ===== PROFILE SCREEN ===== -->
 <div class="screen" id="screen-profile">
   <div class="screen-inner">
-    <div class="profile-header">
       <div class="avatar" id="profile-avatar">G</div>
       <div class="profile-name-display" id="profile-name-display">My Profile</div>
       <div class="profile-hcp" id="profile-hcp-display">Set your GHIN handicap below</div>
@@ -1248,6 +1247,10 @@
           <span class="data-btn-sub">Restore from file</span>
         </button>
       </div>
+      <!-- Hidden admin access — tap version number 5x to open -->
+      <div id="admin-tap-target" onclick="adminTap()" style="text-align:center;margin-top:16px;padding:4px;cursor:default">
+        <span id="admin-version-label" style="font-size:10px;opacity:0.2">v2.0</span>
+      </div>
       <input type="file" id="import-file-input" accept=".json" style="display:none" onchange="importData(event)">
       <div id="data-status" style="margin-top:10px;font-size:12px;text-align:center;min-height:18px"></div>
 
@@ -1277,6 +1280,61 @@
 
     <div style="padding: 0 16px 16px">
       <button class="save-hole-btn" onclick="saveProfile()">Save Profile</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ADMIN SCREEN ===== -->
+<div class="screen" id="screen-admin">
+  <div class="top-bar">
+    <div class="flex-between">
+      <button onclick="goToScreen('screen-profile')" style="background:none;border:none;color:var(--white);font-size:24px;cursor:pointer;opacity:0.7">‹</button>
+      <h1>Green Coordinates</h1>
+      <div style="width:30px"></div>
+    </div>
+  </div>
+  <div class="screen-inner">
+    <div class="card">
+      <div class="card-header">Seed Green Centers</div>
+      <p style="font-size:12px;opacity:0.55;margin-bottom:14px">Pre-load green GPS coordinates for any course so distance displays before anyone plays it. Find coordinates by right-clicking on Google Maps satellite view → copy coordinates.</p>
+
+      <!-- Searchable course picker -->
+      <div class="form-field" style="position:relative">
+        <label class="field-label">Course</label>
+        <input class="field-input" id="admin-course-search"
+          placeholder="Type to search courses…"
+          oninput="adminFilterCourses(this.value)"
+          onfocus="adminShowDropdown()"
+          autocomplete="off"
+          style="padding-right:36px">
+        <span style="position:absolute;right:12px;top:50%;transform:translateY(4px);opacity:0.4;font-size:14px;pointer-events:none">🔍</span>
+        <div id="admin-course-dropdown" style="display:none;position:absolute;left:0;right:0;top:100%;z-index:200;background:#1a2e1a;border:1.5px solid rgba(200,168,75,0.4);border-radius:12px;max-height:280px;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.6);margin-top:4px">
+          <div id="admin-course-options"></div>
+        </div>
+      </div>
+
+      <!-- Selected course badge -->
+      <div id="admin-selected-badge" style="display:none;background:rgba(200,168,75,0.1);border:1px solid rgba(200,168,75,0.3);border-radius:10px;padding:10px 12px;margin-bottom:12px;display:none;align-items:center;justify-content:space-between">
+        <div>
+          <div id="admin-selected-name" style="font-size:13px;font-weight:600"></div>
+          <div id="admin-selected-city" style="font-size:11px;opacity:0.5"></div>
+        </div>
+        <button onclick="adminClearCourse()" style="background:none;border:none;color:rgba(255,255,255,0.4);font-size:18px;cursor:pointer;padding:0 4px">×</button>
+      </div>
+
+      <div id="admin-green-grid" style="display:none">
+        <div style="font-size:11px;opacity:0.4;margin-bottom:10px">Enter lat/lng for each green center.</div>
+        <div id="admin-hole-rows"></div>
+        <button class="modal-btn" onclick="adminSaveAllGreens()" style="margin-top:12px">Save All to Shared Database</button>
+        <div id="admin-save-status" style="font-size:12px;margin-top:8px;min-height:16px"></div>
+      </div>
+    </div>
+    <div class="card" id="admin-view-card" style="display:none">
+      <div class="card-header flex-between">
+        <span>Saved Greens</span>
+        <span id="admin-green-count" style="font-size:11px;opacity:0.4;font-weight:400"></span>
+      </div>
+      <div id="admin-green-list"></div>
     </div>
   </div>
 </div>
@@ -2511,80 +2569,71 @@ const COURSES = [
       {par:3,yards:[182,158]},{par:4,yards:[272,248]},{par:3,yards:[170,149]}
     ]},
 
-  // ── ARIZONA / PHOENIX-SCOTTSDALE ──────────────────────────────────────────
-  { id:61, region:"Phoenix-Scottsdale", name:"TPC Scottsdale (Stadium Course)", city:"Scottsdale, AZ",
-    tees:[{name:"Black",color:"#222",yards:7261,rating:74.7,slope:142},{name:"Blue",color:"#3366cc",yards:6568,rating:71.5,slope:131},{name:"White",color:"#fff",yards:6145,rating:69.5,slope:125},{name:"Red",color:"#cc3333",yards:5539,rating:71.3,slope:122}],
-    holes:[{par:4,yards:[403],hcp:9},{par:4,yards:[442],hcp:15},{par:5,yards:[558],hcp:1},{par:3,yards:[183],hcp:17},{par:4,yards:[470],hcp:5},{par:4,yards:[432],hcp:7},{par:3,yards:[215],hcp:11},{par:4,yards:[475],hcp:13},{par:4,yards:[453],hcp:3},{par:4,yards:[428],hcp:10},{par:4,yards:[472],hcp:4},{par:3,yards:[192],hcp:18},{par:5,yards:[558],hcp:2},{par:4,yards:[490],hcp:6},{par:5,yards:[553],hcp:8},{par:3,yards:[163],hcp:16},{par:3,yards:[332],hcp:14},{par:4,yards:[442],hcp:12}]},
-  { id:62, region:"Phoenix-Scottsdale", name:"TPC Scottsdale (Champions Course)", city:"Scottsdale, AZ",
-    tees:[{name:"Black",color:"#222",yards:7115,rating:73.4,slope:137},{name:"Blue",color:"#3366cc",yards:6586,rating:70.9,slope:130},{name:"White",color:"#fff",yards:6034,rating:68.5,slope:123}],
-    holes:[{par:4,yards:[430],hcp:7},{par:4,yards:[395],hcp:11},{par:3,yards:[175],hcp:17},{par:5,yards:[535],hcp:3},{par:4,yards:[420],hcp:1},{par:4,yards:[385],hcp:13},{par:3,yards:[190],hcp:15},{par:5,yards:[560],hcp:5},{par:4,yards:[445],hcp:9},{par:4,yards:[400],hcp:6},{par:4,yards:[415],hcp:14},{par:3,yards:[170],hcp:18},{par:5,yards:[545],hcp:2},{par:4,yards:[435],hcp:4},{par:4,yards:[380],hcp:16},{par:3,yards:[185],hcp:12},{par:4,yards:[405],hcp:10},{par:5,yards:[525],hcp:8}]},
-  { id:63, region:"Phoenix-Scottsdale", name:"Troon North (Monument Course)", city:"Scottsdale, AZ",
-    tees:[{name:"Black",color:"#222",yards:7070,rating:72.9,slope:145},{name:"Blue",color:"#3366cc",yards:6454,rating:70.2,slope:137},{name:"White",color:"#fff",yards:5995,rating:67.8,slope:127},{name:"Red",color:"#cc3333",yards:5050,rating:69.2,slope:122}],
-    holes:[{par:4,yards:[440],hcp:5},{par:4,yards:[410],hcp:9},{par:5,yards:[540],hcp:1},{par:3,yards:[195],hcp:15},{par:4,yards:[425],hcp:7},{par:4,yards:[395],hcp:11},{par:3,yards:[175],hcp:17},{par:5,yards:[555],hcp:3},{par:4,yards:[445],hcp:13},{par:4,yards:[415],hcp:6},{par:4,yards:[430],hcp:4},{par:3,yards:[185],hcp:16},{par:5,yards:[530],hcp:2},{par:4,yards:[400],hcp:10},{par:4,yards:[420],hcp:8},{par:3,yards:[180],hcp:18},{par:4,yards:[435],hcp:14},{par:5,yards:[545],hcp:12}]},
-  { id:64, region:"Phoenix-Scottsdale", name:"Troon North (Pinnacle Course)", city:"Scottsdale, AZ",
-    tees:[{name:"Black",color:"#222",yards:7025,rating:72.8,slope:144},{name:"Blue",color:"#3366cc",yards:6438,rating:70.1,slope:136},{name:"White",color:"#fff",yards:5966,rating:67.7,slope:126}],
-    holes:[{par:4,yards:[435],hcp:5},{par:4,yards:[415],hcp:9},{par:3,yards:[190],hcp:15},{par:5,yards:[545],hcp:1},{par:4,yards:[420],hcp:7},{par:4,yards:[400],hcp:11},{par:3,yards:[180],hcp:17},{par:5,yards:[550],hcp:3},{par:4,yards:[440],hcp:13},{par:4,yards:[410],hcp:6},{par:4,yards:[425],hcp:4},{par:3,yards:[185],hcp:16},{par:5,yards:[535],hcp:2},{par:4,yards:[405],hcp:10},{par:4,yards:[415],hcp:8},{par:3,yards:[175],hcp:18},{par:4,yards:[430],hcp:14},{par:5,yards:[540],hcp:12}]},
-  { id:65, region:"Phoenix-Scottsdale", name:"Grayhawk Golf Club (Talon)", city:"Scottsdale, AZ",
-    tees:[{name:"Black",color:"#222",yards:6973,rating:73.4,slope:138},{name:"Blue",color:"#3366cc",yards:6466,rating:71.2,slope:132},{name:"White",color:"#fff",yards:5954,rating:68.8,slope:124}],
-    holes:[{par:4,yards:[425],hcp:5},{par:4,yards:[400],hcp:9},{par:3,yards:[185],hcp:15},{par:5,yards:[535],hcp:1},{par:4,yards:[415],hcp:7},{par:4,yards:[390],hcp:11},{par:3,yards:[175],hcp:17},{par:5,yards:[545],hcp:3},{par:4,yards:[435],hcp:13},{par:4,yards:[405],hcp:6},{par:4,yards:[420],hcp:4},{par:3,yards:[180],hcp:16},{par:5,yards:[530],hcp:2},{par:4,yards:[395],hcp:10},{par:4,yards:[410],hcp:8},{par:3,yards:[170],hcp:18},{par:4,yards:[430],hcp:14},{par:5,yards:[540],hcp:12}]},
-  { id:66, region:"Phoenix-Scottsdale", name:"Grayhawk Golf Club (Raptor)", city:"Scottsdale, AZ",
-    tees:[{name:"Black",color:"#222",yards:7135,rating:74.1,slope:142},{name:"Blue",color:"#3366cc",yards:6607,rating:71.8,slope:135},{name:"White",color:"#fff",yards:6099,rating:69.4,slope:127}],
-    holes:[{par:4,yards:[445],hcp:5},{par:4,yards:[420],hcp:9},{par:3,yards:[195],hcp:15},{par:5,yards:[555],hcp:1},{par:4,yards:[430],hcp:7},{par:4,yards:[405],hcp:11},{par:3,yards:[185],hcp:17},{par:5,yards:[565],hcp:3},{par:4,yards:[450],hcp:13},{par:4,yards:[415],hcp:6},{par:4,yards:[435],hcp:4},{par:3,yards:[190],hcp:16},{par:5,yards:[545],hcp:2},{par:4,yards:[410],hcp:10},{par:4,yards:[425],hcp:8},{par:3,yards:[180],hcp:18},{par:4,yards:[440],hcp:14},{par:5,yards:[555],hcp:12}]},
-  { id:67, region:"Phoenix-Scottsdale", type:"municipal", name:"Papago Golf Course", city:"Phoenix, AZ",
-    tees:[{name:"Blue",color:"#3366cc",yards:7068,rating:73.4,slope:126},{name:"White",color:"#fff",yards:6598,rating:71.3,slope:121},{name:"Red",color:"#cc3333",yards:5800,rating:73.0,slope:121}],
-    holes:[{par:4,yards:[420],hcp:5},{par:4,yards:[395],hcp:9},{par:3,yards:[180],hcp:15},{par:5,yards:[530],hcp:1},{par:4,yards:[410],hcp:7},{par:4,yards:[385],hcp:11},{par:3,yards:[170],hcp:17},{par:5,yards:[540],hcp:3},{par:4,yards:[430],hcp:13},{par:4,yards:[400],hcp:6},{par:4,yards:[415],hcp:4},{par:3,yards:[175],hcp:16},{par:5,yards:[525],hcp:2},{par:4,yards:[390],hcp:10},{par:4,yards:[405],hcp:8},{par:3,yards:[165],hcp:18},{par:4,yards:[425],hcp:14},{par:5,yards:[535],hcp:12}]},
-  { id:68, region:"Phoenix-Scottsdale", name:"Talking Stick Golf Club (O'odham)", city:"Scottsdale, AZ",
-    tees:[{name:"Black",color:"#222",yards:7133,rating:73.9,slope:128},{name:"Blue",color:"#3366cc",yards:6669,rating:71.7,slope:123},{name:"White",color:"#fff",yards:6211,rating:69.8,slope:119}],
-    holes:[{par:4,yards:[440],hcp:5},{par:4,yards:[415],hcp:9},{par:3,yards:[190],hcp:15},{par:5,yards:[550],hcp:1},{par:4,yards:[425],hcp:7},{par:4,yards:[400],hcp:11},{par:3,yards:[180],hcp:17},{par:5,yards:[560],hcp:3},{par:4,yards:[445],hcp:13},{par:4,yards:[410],hcp:6},{par:4,yards:[430],hcp:4},{par:3,yards:[185],hcp:16},{par:5,yards:[540],hcp:2},{par:4,yards:[405],hcp:10},{par:4,yards:[420],hcp:8},{par:3,yards:[175],hcp:18},{par:4,yards:[435],hcp:14},{par:5,yards:[545],hcp:12}]},
-  { id:69, region:"Phoenix-Scottsdale", name:"Talking Stick Golf Club (Piipaash)", city:"Scottsdale, AZ",
-    tees:[{name:"Black",color:"#222",yards:6833,rating:72.5,slope:122},{name:"Blue",color:"#3366cc",yards:6433,rating:70.5,slope:118},{name:"White",color:"#fff",yards:5993,rating:68.4,slope:113}],
-    holes:[{par:4,yards:[420],hcp:5},{par:4,yards:[400],hcp:9},{par:3,yards:[180],hcp:15},{par:5,yards:[530],hcp:1},{par:4,yards:[410],hcp:7},{par:4,yards:[385],hcp:11},{par:3,yards:[170],hcp:17},{par:5,yards:[540],hcp:3},{par:4,yards:[430],hcp:13},{par:4,yards:[395],hcp:6},{par:4,yards:[415],hcp:4},{par:3,yards:[175],hcp:16},{par:5,yards:[520],hcp:2},{par:4,yards:[390],hcp:10},{par:4,yards:[405],hcp:8},{par:3,yards:[165],hcp:18},{par:4,yards:[425],hcp:14},{par:5,yards:[530],hcp:12}]},
-  { id:70, region:"Phoenix-Scottsdale", name:"Wigwam Golf Club (Gold Course)", city:"Litchfield Park, AZ",
-    tees:[{name:"Black",color:"#222",yards:7430,rating:75.9,slope:138},{name:"Blue",color:"#3366cc",yards:6865,rating:73.1,slope:132},{name:"White",color:"#fff",yards:6302,rating:70.5,slope:125}],
-    holes:[{par:4,yards:[455],hcp:5},{par:4,yards:[430],hcp:9},{par:3,yards:[200],hcp:15},{par:5,yards:[575],hcp:1},{par:4,yards:[445],hcp:7},{par:4,yards:[420],hcp:11},{par:3,yards:[190],hcp:17},{par:5,yards:[585],hcp:3},{par:4,yards:[465],hcp:13},{par:4,yards:[435],hcp:6},{par:4,yards:[450],hcp:4},{par:3,yards:[195],hcp:16},{par:5,yards:[570],hcp:2},{par:4,yards:[425],hcp:10},{par:4,yards:[440],hcp:8},{par:3,yards:[185],hcp:18},{par:4,yards:[455],hcp:14},{par:5,yards:[580],hcp:12}]},
-  { id:71, region:"Phoenix-Scottsdale", name:"Camelback Golf Club (Ambiente)", city:"Scottsdale, AZ",
-    tees:[{name:"Black",color:"#222",yards:7225,rating:73.9,slope:138},{name:"Blue",color:"#3366cc",yards:6731,rating:71.7,slope:132},{name:"White",color:"#fff",yards:6182,rating:69.3,slope:124}],
-    holes:[{par:4,yards:[445],hcp:5},{par:4,yards:[420],hcp:9},{par:3,yards:[195],hcp:15},{par:5,yards:[560],hcp:1},{par:4,yards:[430],hcp:7},{par:4,yards:[405],hcp:11},{par:3,yards:[185],hcp:17},{par:5,yards:[570],hcp:3},{par:4,yards:[450],hcp:13},{par:4,yards:[415],hcp:6},{par:4,yards:[435],hcp:4},{par:3,yards:[190],hcp:16},{par:5,yards:[550],hcp:2},{par:4,yards:[410],hcp:10},{par:4,yards:[425],hcp:8},{par:3,yards:[180],hcp:18},{par:4,yards:[440],hcp:14},{par:5,yards:[560],hcp:12}]},
-  { id:72, region:"Phoenix-Scottsdale", name:"Camelback Golf Club (Padre)", city:"Scottsdale, AZ",
-    tees:[{name:"Black",color:"#222",yards:6903,rating:72.2,slope:130},{name:"Blue",color:"#3366cc",yards:6418,rating:70.1,slope:124},{name:"White",color:"#fff",yards:5891,rating:67.6,slope:117}],
-    holes:[{par:4,yards:[425],hcp:5},{par:4,yards:[400],hcp:9},{par:3,yards:[185],hcp:15},{par:5,yards:[540],hcp:1},{par:4,yards:[415],hcp:7},{par:4,yards:[390],hcp:11},{par:3,yards:[175],hcp:17},{par:5,yards:[550],hcp:3},{par:4,yards:[435],hcp:13},{par:4,yards:[405],hcp:6},{par:4,yards:[420],hcp:4},{par:3,yards:[180],hcp:16},{par:5,yards:[530],hcp:2},{par:4,yards:[395],hcp:10},{par:4,yards:[410],hcp:8},{par:3,yards:[170],hcp:18},{par:4,yards:[425],hcp:14},{par:5,yards:[540],hcp:12}]},
-  { id:73, region:"Phoenix-Scottsdale", name:"Las Sendas Golf Club", city:"Mesa, AZ",
-    tees:[{name:"Black",color:"#222",yards:6834,rating:72.9,slope:143},{name:"Blue",color:"#3366cc",yards:6285,rating:70.4,slope:135},{name:"White",color:"#fff",yards:5734,rating:67.8,slope:126}],
-    holes:[{par:4,yards:[420],hcp:5},{par:4,yards:[395],hcp:9},{par:3,yards:[180],hcp:15},{par:5,yards:[530],hcp:1},{par:4,yards:[410],hcp:7},{par:4,yards:[385],hcp:11},{par:3,yards:[170],hcp:17},{par:5,yards:[540],hcp:3},{par:4,yards:[430],hcp:13},{par:4,yards:[400],hcp:6},{par:4,yards:[415],hcp:4},{par:3,yards:[175],hcp:16},{par:5,yards:[525],hcp:2},{par:4,yards:[390],hcp:10},{par:4,yards:[405],hcp:8},{par:3,yards:[165],hcp:18},{par:4,yards:[420],hcp:14},{par:5,yards:[535],hcp:12}]},
-  { id:74, region:"Phoenix-Scottsdale", name:"Raven Golf Club at South Mountain", city:"Phoenix, AZ",
-    tees:[{name:"Black",color:"#222",yards:7078,rating:73.8,slope:134},{name:"Blue",color:"#3366cc",yards:6602,rating:71.6,slope:128},{name:"White",color:"#fff",yards:6081,rating:69.3,slope:121}],
-    holes:[{par:4,yards:[435],hcp:5},{par:4,yards:[410],hcp:9},{par:3,yards:[190],hcp:15},{par:5,yards:[545],hcp:1},{par:4,yards:[425],hcp:7},{par:4,yards:[400],hcp:11},{par:3,yards:[180],hcp:17},{par:5,yards:[555],hcp:3},{par:4,yards:[445],hcp:13},{par:4,yards:[410],hcp:6},{par:4,yards:[430],hcp:4},{par:3,yards:[185],hcp:16},{par:5,yards:[540],hcp:2},{par:4,yards:[405],hcp:10},{par:4,yards:[420],hcp:8},{par:3,yards:[175],hcp:18},{par:4,yards:[435],hcp:14},{par:5,yards:[550],hcp:12}]},
-  { id:75, region:"Phoenix-Scottsdale", name:"Quintero Golf Club", city:"Peoria, AZ",
-    tees:[{name:"Black",color:"#222",yards:7203,rating:74.8,slope:148},{name:"Blue",color:"#3366cc",yards:6674,rating:72.2,slope:140},{name:"White",color:"#fff",yards:6125,rating:69.8,slope:132}],
-    holes:[{par:4,yards:[445],hcp:5},{par:4,yards:[420],hcp:9},{par:3,yards:[195],hcp:15},{par:5,yards:[560],hcp:1},{par:4,yards:[430],hcp:7},{par:4,yards:[405],hcp:11},{par:3,yards:[185],hcp:17},{par:5,yards:[570],hcp:3},{par:4,yards:[450],hcp:13},{par:4,yards:[415],hcp:6},{par:4,yards:[435],hcp:4},{par:3,yards:[190],hcp:16},{par:5,yards:[555],hcp:2},{par:4,yards:[410],hcp:10},{par:4,yards:[425],hcp:8},{par:3,yards:[180],hcp:18},{par:4,yards:[440],hcp:14},{par:5,yards:[560],hcp:12}]},
-  { id:76, region:"Phoenix-Scottsdale", name:"Ak-Chin Southern Dunes Golf Club", city:"Maricopa, AZ",
-    tees:[{name:"Black",color:"#222",yards:7516,rating:76.7,slope:148},{name:"Blue",color:"#3366cc",yards:6891,rating:73.6,slope:139},{name:"White",color:"#fff",yards:6369,rating:71.1,slope:130}],
-    holes:[{par:4,yards:[465],hcp:5},{par:4,yards:[440],hcp:9},{par:3,yards:[205],hcp:15},{par:5,yards:[580],hcp:1},{par:4,yards:[450],hcp:7},{par:4,yards:[425],hcp:11},{par:3,yards:[195],hcp:17},{par:5,yards:[590],hcp:3},{par:4,yards:[470],hcp:13},{par:4,yards:[435],hcp:6},{par:4,yards:[455],hcp:4},{par:3,yards:[200],hcp:16},{par:5,yards:[575],hcp:2},{par:4,yards:[430],hcp:10},{par:4,yards:[445],hcp:8},{par:3,yards:[190],hcp:18},{par:4,yards:[460],hcp:14},{par:5,yards:[585],hcp:12}]},
-  { id:77, region:"Phoenix-Scottsdale", name:"SunRidge Canyon Golf Club", city:"Fountain Hills, AZ",
-    tees:[{name:"Black",color:"#222",yards:6823,rating:72.5,slope:145},{name:"Blue",color:"#3366cc",yards:6335,rating:70.2,slope:138},{name:"White",color:"#fff",yards:5743,rating:67.5,slope:128}],
-    holes:[{par:4,yards:[420],hcp:5},{par:4,yards:[395],hcp:9},{par:3,yards:[180],hcp:15},{par:5,yards:[530],hcp:1},{par:4,yards:[410],hcp:7},{par:4,yards:[385],hcp:11},{par:3,yards:[170],hcp:17},{par:5,yards:[540],hcp:3},{par:4,yards:[430],hcp:13},{par:4,yards:[400],hcp:6},{par:4,yards:[415],hcp:4},{par:3,yards:[175],hcp:16},{par:5,yards:[525],hcp:2},{par:4,yards:[390],hcp:10},{par:4,yards:[405],hcp:8},{par:3,yards:[165],hcp:18},{par:4,yards:[420],hcp:14},{par:5,yards:[535],hcp:12}]},
-  { id:78, region:"Phoenix-Scottsdale", name:"Legacy Golf Resort", city:"Phoenix, AZ",
-    tees:[{name:"Black",color:"#222",yards:6833,rating:72.6,slope:130},{name:"Blue",color:"#3366cc",yards:6388,rating:70.5,slope:124},{name:"White",color:"#fff",yards:5912,rating:68.4,slope:118}],
-    holes:[{par:4,yards:[420],hcp:5},{par:4,yards:[395],hcp:9},{par:3,yards:[180],hcp:15},{par:5,yards:[530],hcp:1},{par:4,yards:[410],hcp:7},{par:4,yards:[385],hcp:11},{par:3,yards:[170],hcp:17},{par:5,yards:[540],hcp:3},{par:4,yards:[430],hcp:13},{par:4,yards:[400],hcp:6},{par:4,yards:[415],hcp:4},{par:3,yards:[175],hcp:16},{par:5,yards:[525],hcp:2},{par:4,yards:[390],hcp:10},{par:4,yards:[405],hcp:8},{par:3,yards:[165],hcp:18},{par:4,yards:[420],hcp:14},{par:5,yards:[535],hcp:12}]},
-  { id:79, region:"Phoenix-Scottsdale", name:"Trilogy Golf Club at Vistancia", city:"Peoria, AZ",
-    tees:[{name:"Black",color:"#222",yards:7006,rating:73.5,slope:138},{name:"Blue",color:"#3366cc",yards:6483,rating:71.1,slope:131},{name:"White",color:"#fff",yards:5935,rating:68.6,slope:122}],
-    holes:[{par:4,yards:[430],hcp:5},{par:4,yards:[405],hcp:9},{par:3,yards:[185],hcp:15},{par:5,yards:[540],hcp:1},{par:4,yards:[420],hcp:7},{par:4,yards:[395],hcp:11},{par:3,yards:[175],hcp:17},{par:5,yards:[550],hcp:3},{par:4,yards:[440],hcp:13},{par:4,yards:[410],hcp:6},{par:4,yards:[425],hcp:4},{par:3,yards:[180],hcp:16},{par:5,yards:[535],hcp:2},{par:4,yards:[400],hcp:10},{par:4,yards:[415],hcp:8},{par:3,yards:[170],hcp:18},{par:4,yards:[430],hcp:14},{par:5,yards:[545],hcp:12}]},
-  { id:80, region:"Phoenix-Scottsdale", type:"municipal", name:"Dobson Ranch Golf Course", city:"Mesa, AZ",
-    tees:[{name:"Blue",color:"#3366cc",yards:6563,rating:71.0,slope:119},{name:"White",color:"#fff",yards:6149,rating:69.1,slope:114}],
-    holes:[{par:4,yards:[410],hcp:5},{par:4,yards:[385],hcp:9},{par:3,yards:[175],hcp:15},{par:5,yards:[525],hcp:1},{par:4,yards:[400],hcp:7},{par:4,yards:[375],hcp:11},{par:3,yards:[165],hcp:17},{par:5,yards:[535],hcp:3},{par:4,yards:[420],hcp:13},{par:4,yards:[390],hcp:6},{par:4,yards:[405],hcp:4},{par:3,yards:[170],hcp:16},{par:5,yards:[515],hcp:2},{par:4,yards:[380],hcp:10},{par:4,yards:[395],hcp:8},{par:3,yards:[160],hcp:18},{par:4,yards:[410],hcp:14},{par:5,yards:[525],hcp:12}]},
-  { id:81, region:"Phoenix-Scottsdale", type:"municipal", name:"Cave Creek Golf Course", city:"Phoenix, AZ",
-    tees:[{name:"Blue",color:"#3366cc",yards:6819,rating:72.2,slope:125},{name:"White",color:"#fff",yards:6406,rating:70.3,slope:120}],
-    holes:[{par:4,yards:[425],hcp:5},{par:4,yards:[400],hcp:9},{par:3,yards:[185],hcp:15},{par:5,yards:[540],hcp:1},{par:4,yards:[415],hcp:7},{par:4,yards:[390],hcp:11},{par:3,yards:[175],hcp:17},{par:5,yards:[550],hcp:3},{par:4,yards:[435],hcp:13},{par:4,yards:[405],hcp:6},{par:4,yards:[420],hcp:4},{par:3,yards:[180],hcp:16},{par:5,yards:[530],hcp:2},{par:4,yards:[395],hcp:10},{par:4,yards:[410],hcp:8},{par:3,yards:[170],hcp:18},{par:4,yards:[425],hcp:14},{par:5,yards:[540],hcp:12}]},
-  { id:82, region:"Phoenix-Scottsdale", type:"municipal", name:"Encanto Golf Course", city:"Phoenix, AZ",
-    tees:[{name:"Blue",color:"#3366cc",yards:6413,rating:70.1,slope:112},{name:"White",color:"#fff",yards:6076,rating:68.5,slope:109}],
-    holes:[{par:4,yards:[400],hcp:5},{par:4,yards:[375],hcp:9},{par:3,yards:[170],hcp:15},{par:5,yards:[515],hcp:1},{par:4,yards:[390],hcp:7},{par:4,yards:[365],hcp:11},{par:3,yards:[160],hcp:17},{par:5,yards:[525],hcp:3},{par:4,yards:[410],hcp:13},{par:4,yards:[380],hcp:6},{par:4,yards:[395],hcp:4},{par:3,yards:[165],hcp:16},{par:5,yards:[505],hcp:2},{par:4,yards:[370],hcp:10},{par:4,yards:[385],hcp:8},{par:3,yards:[155],hcp:18},{par:4,yards:[400],hcp:14},{par:5,yards:[515],hcp:12}]},
-  // ── ARIZONA / TUCSON ──────────────────────────────────────────────────────
-  { id:83, region:"Tucson", name:"Arizona National Golf Club", city:"Tucson, AZ",
-    tees:[{name:"Black",color:"#222",yards:6765,rating:72.5,slope:145},{name:"Blue",color:"#3366cc",yards:6255,rating:70.1,slope:137},{name:"White",color:"#fff",yards:5765,rating:67.8,slope:128}],
-    holes:[{par:4,yards:[420],hcp:5},{par:4,yards:[395],hcp:9},{par:3,yards:[180],hcp:15},{par:5,yards:[530],hcp:1},{par:4,yards:[410],hcp:7},{par:4,yards:[385],hcp:11},{par:3,yards:[170],hcp:17},{par:5,yards:[540],hcp:3},{par:4,yards:[430],hcp:13},{par:4,yards:[400],hcp:6},{par:4,yards:[415],hcp:4},{par:3,yards:[175],hcp:16},{par:5,yards:[525],hcp:2},{par:4,yards:[390],hcp:10},{par:4,yards:[405],hcp:8},{par:3,yards:[165],hcp:18},{par:4,yards:[420],hcp:14},{par:5,yards:[535],hcp:12}]},
-  { id:84, region:"Tucson", type:"municipal", name:"Randolph Dell Urich Golf Course", city:"Tucson, AZ",
-    tees:[{name:"Blue",color:"#3366cc",yards:6902,rating:72.5,slope:121},{name:"White",color:"#fff",yards:6459,rating:70.4,slope:117}],
-    holes:[{par:4,yards:[430],hcp:5},{par:4,yards:[405],hcp:9},{par:3,yards:[190],hcp:15},{par:5,yards:[545],hcp:1},{par:4,yards:[420],hcp:7},{par:4,yards:[395],hcp:11},{par:3,yards:[180],hcp:17},{par:5,yards:[555],hcp:3},{par:4,yards:[440],hcp:13},{par:4,yards:[410],hcp:6},{par:4,yards:[425],hcp:4},{par:3,yards:[185],hcp:16},{par:5,yards:[535],hcp:2},{par:4,yards:[400],hcp:10},{par:4,yards:[415],hcp:8},{par:3,yards:[175],hcp:18},{par:4,yards:[430],hcp:14},{par:5,yards:[545],hcp:12}]},
+  // ── MASSACHUSETTS / WESTERN MA ────────────────────────────────────────────
+  { id:135, region:"Western MA", name:"The Ranch Golf Club", city:"Southwick, MA",
+    tees:[
+      {name:"Black",color:"#222",yards:7174,rating:74.1,slope:140},
+      {name:"Blue", color:"#3366cc",yards:6641,rating:71.5,slope:133},
+      {name:"White",color:"#fff",yards:6132,rating:69.1,slope:127},
+      {name:"Gold", color:"#c8a84b",yards:5498,rating:71.2,slope:124}
+    ],
+    holes:[
+      {par:5,yards:[574],hcp:5},{par:4,yards:[432],hcp:1},{par:4,yards:[398],hcp:11},
+      {par:3,yards:[210],hcp:15},{par:4,yards:[415],hcp:7},{par:4,yards:[387],hcp:9},
+      {par:3,yards:[195],hcp:17},{par:4,yards:[442],hcp:3},{par:4,yards:[404],hcp:13},
+      {par:4,yards:[420],hcp:4},{par:5,yards:[548],hcp:2},{par:3,yards:[185],hcp:18},
+      {par:5,yards:[530],hcp:6},{par:4,yards:[448],hcp:8},{par:4,yards:[412],hcp:10},
+      {par:3,yards:[205],hcp:16},{par:4,yards:[435],hcp:12},{par:4,yards:[330],hcp:14}
+    ]},
+
+  { id:136, region:"Western MA", type:"municipal", name:"Ledges Golf Club", city:"South Hadley, MA",
+    tees:[
+      {name:"Black",color:"#222",yards:6507,rating:71.8,slope:129},
+      {name:"Blue", color:"#3366cc",yards:6110,rating:69.9,slope:126},
+      {name:"White",color:"#fff",yards:5539,rating:67.2,slope:121},
+      {name:"Red",  color:"#cc3333",yards:5001,rating:64.2,slope:114}
+    ],
+    holes:[
+      {par:4,yards:[406],hcp:5},{par:4,yards:[448],hcp:1},{par:3,yards:[106],hcp:17},
+      {par:4,yards:[305],hcp:11},{par:5,yards:[489],hcp:7},{par:4,yards:[315],hcp:13},
+      {par:3,yards:[143],hcp:15},{par:4,yards:[371],hcp:9},{par:5,yards:[560],hcp:3},
+      {par:5,yards:[579],hcp:8},{par:4,yards:[422],hcp:2},{par:4,yards:[384],hcp:4},
+      {par:3,yards:[158],hcp:18},{par:4,yards:[376],hcp:6},{par:4,yards:[399],hcp:12},
+      {par:3,yards:[179],hcp:16},{par:5,yards:[538],hcp:10},{par:4,yards:[329],hcp:14}
+    ]},
+
+  { id:137, region:"Western MA", name:"Springfield Country Club", city:"West Springfield, MA",
+    tees:[
+      {name:"Blue", color:"#3366cc",yards:6531,rating:72.2,slope:138},
+      {name:"White",color:"#fff",yards:6215,rating:70.2,slope:136},
+      {name:"Gold", color:"#c8a84b",yards:5050,rating:65.5,slope:116},
+      {name:"Red",  color:"#cc3333",yards:4838,rating:68.2,slope:121}
+    ],
+    holes:[
+      {par:4,yards:[398],hcp:9},{par:4,yards:[365],hcp:13},{par:3,yards:[178],hcp:17},
+      {par:5,yards:[520],hcp:3},{par:4,yards:[380],hcp:5},{par:4,yards:[408],hcp:1},
+      {par:3,yards:[165],hcp:15},{par:4,yards:[420],hcp:7},{par:5,yards:[535],hcp:11},
+      {par:4,yards:[385],hcp:8},{par:4,yards:[412],hcp:2},{par:3,yards:[172],hcp:16},
+      {par:5,yards:[528],hcp:4},{par:4,yards:[395],hcp:6},{par:4,yards:[368],hcp:12},
+      {par:3,yards:[185],hcp:18},{par:4,yards:[405],hcp:10},{par:5,yards:[532],hcp:14}
+    ]},
+
+  { id:138, region:"Western MA", name:"Crumpin-Fox Club", city:"Bernardston, MA",
+    tees:[
+      {name:"Black",color:"#222",yards:7007,rating:73.8,slope:141},
+      {name:"Blue", color:"#3366cc",yards:6551,rating:71.5,slope:135},
+      {name:"White",color:"#fff",yards:6064,rating:69.3,slope:128},
+      {name:"Red",  color:"#cc3333",yards:5412,rating:71.0,slope:124}
+    ],
+    holes:[
+      {par:4,yards:[432],hcp:7},{par:5,yards:[568],hcp:3},{par:4,yards:[395],hcp:11},
+      {par:3,yards:[205],hcp:15},{par:4,yards:[448],hcp:1},{par:4,yards:[378],hcp:13},
+      {par:5,yards:[535],hcp:5},{par:3,yards:[185],hcp:17},{par:4,yards:[415],hcp:9},
+      {par:4,yards:[420],hcp:4},{par:4,yards:[438],hcp:2},{par:5,yards:[552],hcp:6},
+      {par:3,yards:[192],hcp:18},{par:4,yards:[410],hcp:8},{par:4,yards:[388],hcp:12},
+      {par:5,yards:[545],hcp:10},{par:3,yards:[198],hcp:16},{par:4,yards:[502],hcp:14}
+    ]},
+
   // ── ILLINOIS / CHICAGO SUBURBS ────────────────────────────────────────────
   { id:85,  region:"DuPage County", name:"Cantigny Golf (Hillside)", city:"Wheaton, IL",
     tees:[{name:"Black",color:"#222",yards:6779,rating:72.8,slope:133},{name:"Blue",color:"#3366cc",yards:6364,rating:70.7,slope:128},{name:"White",color:"#fff",yards:5933,rating:68.6,slope:123},{name:"Red",color:"#cc3333",yards:5241,rating:70.3,slope:119}],
@@ -2998,6 +3047,29 @@ function setFilter(f, btn) {
 
 function filterCourses(q) { renderCourseList(q); }
 
+// Hide filter tabs that have no matching courses
+function updateFilterTabVisibility() {
+  const all = getAllCourses();
+  const tabFilters = {
+    'CA': c => getCourseState(c) === 'CA',
+    'IL': c => getCourseState(c) === 'IL',
+    'MA': c => getCourseState(c) === 'MA',
+    'municipal': c => c.type === 'municipal',
+    'executive': c => c.type === 'executive' || c.type === 'par3',
+  };
+  document.querySelectorAll('.filter-tab[onclick]').forEach(btn => {
+    const match = btn.getAttribute('onclick').match(/setFilter\('([^']+)'/);
+    if (!match || match[1] === 'all') return;
+    const filter   = match[1];
+    const hasMatch = tabFilters[filter] ? all.some(tabFilters[filter]) : true;
+    btn.style.display = hasMatch ? '' : 'none';
+    // If active tab is now hidden, reset to all
+    if (!hasMatch && btn.classList.contains('on')) {
+      setFilter('all', document.querySelector('.filter-tab[onclick*="all"]'));
+    }
+  });
+}
+
 function getTypeLabel(c) {
   const t       = c.type || 'regulation';
   const totalPar = c.holes ? c.holes.reduce((s,h)=>s+h.par,0) : 72;
@@ -3036,14 +3108,16 @@ function renderCourseList(q = '') {
 
     if (activeFilter === 'all')       return true;
     if (activeFilter === 'CA')        return getCourseState(c) === 'CA';
-    if (activeFilter === 'AZ')        return getCourseState(c) === 'AZ';
     if (activeFilter === 'IL')        return getCourseState(c) === 'IL';
+    if (activeFilter === 'MA')        return getCourseState(c) === 'MA';
     if (activeFilter === 'municipal') return c.type === 'municipal';
     if (activeFilter === 'executive') return c.type === 'executive' || c.type === 'par3';
     return false;
   });
 
   document.getElementById('course-count').textContent = filtered.length + ' course' + (filtered.length !== 1 ? 's' : '');
+
+  updateFilterTabVisibility();
 
   if (filtered.length === 0) {
     list.innerHTML = '<div style="opacity:0.4;text-align:center;padding:32px;font-size:14px">No courses found — search below to add one<\/div>';
@@ -3058,7 +3132,7 @@ function renderCourseList(q = '') {
     byState[st].push(c);
   });
 
-  const stateLabels = { CA: '🐻 California', AZ: '🌵 Arizona', IL: '🦅 Illinois' };
+  const stateLabels = { CA: '🐻 California', AZ: '🌵 Arizona', IL: '🦅 Illinois', MA: '🦞 Massachusetts' };
 
   list.innerHTML = Object.entries(byState)
     .sort(([a],[b]) => a.localeCompare(b))
@@ -7092,6 +7166,233 @@ function setDataStatus(msg, type) {
   setTimeout(() => { el.textContent = ''; el.className = ''; }, 5000);
 }
 
+// ===== ADMIN TOOL — GREEN COORDINATE MANAGER =====
+
+let adminTapCount = 0;
+let adminTapTimer = null;
+
+function adminTap() {
+  adminTapCount++;
+  clearTimeout(adminTapTimer);
+  adminTapTimer = setTimeout(() => { adminTapCount = 0; }, 2000);
+
+  const label = document.getElementById('admin-version-label');
+  if (adminTapCount >= 5) {
+    adminTapCount = 0;
+    openAdminScreen();
+  } else if (adminTapCount >= 3) {
+    if (label) label.style.opacity = '0.5';
+  }
+}
+
+function openAdminScreen() {
+  adminPopulateCourseSelect();
+  goToScreen('screen-admin');
+}
+
+let adminAllCourses    = [];
+let adminSelectedCourse = null;
+
+function openAdminScreen() {
+  adminAllCourses = [...COURSES, ...(state.customCourses || [])];
+  adminSelectedCourse = null;
+  const searchEl = document.getElementById('admin-course-search');
+  if (searchEl) searchEl.value = '';
+  document.getElementById('admin-green-grid').style.display  = 'none';
+  document.getElementById('admin-view-card').style.display   = 'none';
+  document.getElementById('admin-selected-badge').style.display = 'none';
+  document.getElementById('admin-course-dropdown').style.display = 'none';
+  goToScreen('screen-admin');
+}
+
+function adminShowDropdown() {
+  adminFilterCourses(document.getElementById('admin-course-search')?.value || '');
+}
+
+function adminFilterCourses(q) {
+  const dropdown = document.getElementById('admin-course-dropdown');
+  const options  = document.getElementById('admin-course-options');
+  if (!dropdown || !options) return;
+
+  const ql       = q.toLowerCase().trim();
+  const filtered = ql.length === 0
+    ? adminAllCourses.slice(0, 50)
+    : adminAllCourses.filter(c =>
+        (c.name||'').toLowerCase().includes(ql) ||
+        (c.city||'').toLowerCase().includes(ql)
+      ).slice(0, 30);
+
+  if (filtered.length === 0) {
+    options.innerHTML = '<div style="padding:14px;text-align:center;opacity:0.4;font-size:13px">No courses found</div>';
+  } else {
+    options.innerHTML = filtered.map((c, i) => {
+      const state = (c.city||'').match(/,\s*([A-Z]{2})$/)?.[1] || '';
+      return `<div onclick="adminSelectCourse(${i + (ql ? 0 : 0)}, '${String(c.id).replace(/'/g,"\\'")}' )"
+        style="padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.06);cursor:pointer;active:background:rgba(255,255,255,0.1)"
+        ontouchstart="this.style.background='rgba(200,168,75,0.15)'"
+        ontouchend="this.style.background=''">
+        <div style="font-size:13px;font-weight:600">${c.name}</div>
+        <div style="font-size:11px;opacity:0.45">${c.city}</div>
+      </div>`;
+    }).join('');
+  }
+
+  dropdown.style.display = 'block';
+
+  // Store filtered list for index lookup
+  adminAllCourses._filtered = filtered;
+}
+
+function adminSelectCourse(idx, idStr) {
+  const course = adminAllCourses.find(c => String(c.id) === idStr)
+                 || adminAllCourses._filtered?.[idx];
+  if (!course) return;
+
+  adminSelectedCourse = course;
+
+  // Update search field and hide dropdown
+  const searchEl = document.getElementById('admin-course-search');
+  if (searchEl) searchEl.value = course.name;
+  document.getElementById('admin-course-dropdown').style.display = 'none';
+
+  // Show selected badge
+  const badge = document.getElementById('admin-selected-badge');
+  document.getElementById('admin-selected-name').textContent = course.name;
+  document.getElementById('admin-selected-city').textContent = course.city || '';
+  badge.style.display = 'flex';
+
+  // Load green data
+  adminLoadCourse();
+}
+
+function adminClearCourse() {
+  adminSelectedCourse = null;
+  const searchEl = document.getElementById('admin-course-search');
+  if (searchEl) searchEl.value = '';
+  document.getElementById('admin-selected-badge').style.display = 'none';
+  document.getElementById('admin-green-grid').style.display  = 'none';
+  document.getElementById('admin-view-card').style.display   = 'none';
+  document.getElementById('admin-course-dropdown').style.display = 'none';
+}
+
+// Close dropdown when tapping outside
+document.addEventListener('click', e => {
+  if (!e.target.closest('#admin-course-search') && !e.target.closest('#admin-course-dropdown')) {
+    const dd = document.getElementById('admin-course-dropdown');
+    if (dd) dd.style.display = 'none';
+  }
+});
+
+async function adminLoadCourse() {
+  const course = adminSelectedCourse;
+  if (!course) return;
+
+  const grid     = document.getElementById('admin-green-grid');
+  const rowsEl   = document.getElementById('admin-hole-rows');
+  const viewCard = document.getElementById('admin-view-card');
+  const listEl   = document.getElementById('admin-green-list');
+  const countEl  = document.getElementById('admin-green-count');
+
+  grid.style.display = 'block';
+  rowsEl.innerHTML   = '<div style="opacity:0.4;font-size:12px;padding:8px 0">Loading existing data…</div>';
+
+  // Fetch existing green data from KV
+  const kvId = getGpsCourseId(course);
+  let existing = {};
+  try {
+    const res  = await fetch(`${WORKER_URL}/greens/${encodeURIComponent(kvId)}`);
+    const data = await res.json();
+    existing   = data.holes || {};
+  } catch(e) {}
+
+  const holeCount = course.holes?.length || 18;
+  const marked    = Object.keys(existing).length;
+
+  // Build input grid
+  rowsEl.innerHTML = Array.from({length: holeCount}, (_, i) => {
+    const n    = i + 1;
+    const par  = course.holes?.[i]?.par || 4;
+    const ex   = existing[String(n)];
+    const lat  = ex?.lat?.toFixed(6) || '';
+    const lng  = ex?.lng?.toFixed(6) || '';
+    const marked_by = ex?.markedBy || '';
+    const badge = ex
+      ? `<span style="font-size:10px;color:#6dd46d;margin-left:6px">✓ ${marked_by.includes('seed') ? 'approx' : 'GPS'}<\/span>`
+      : `<span style="font-size:10px;opacity:0.3;margin-left:6px">not set<\/span>`;
+
+    return `<div style="margin-bottom:10px;padding:10px;background:rgba(255,255,255,0.04);border-radius:10px">
+      <div style="font-size:12px;font-weight:600;margin-bottom:6px">
+        Hole ${n} · Par ${par} · ${course.holes?.[i]?.yards?.[0] || ''}y ${badge}
+      <\/div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div>
+          <div class="field-label">Latitude<\/div>
+          <input class="field-input" id="admin-lat-${n}" value="${lat}" placeholder="42.6748" type="number" step="0.000001" style="font-size:13px">
+        <\/div>
+        <div>
+          <div class="field-label">Longitude<\/div>
+          <input class="field-input" id="admin-lng-${n}" value="${lng}" placeholder="-72.5312" type="number" step="0.000001" style="font-size:13px">
+        <\/div>
+      <\/div>
+    <\/div>`;
+  }).join('');
+
+  // Show existing data summary
+  viewCard.style.display = 'block';
+  countEl.textContent    = `${marked}/${holeCount} mapped`;
+  listEl.innerHTML = Object.keys(existing).length === 0
+    ? '<div style="opacity:0.4;font-size:12px;padding:8px 0">No greens mapped yet<\/div>'
+    : Object.entries(existing).sort((a,b) => parseInt(a)-parseInt(b)).map(([h, g]) =>
+        `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.06);font-size:12px">
+          <span>Hole ${h}<\/span>
+          <span style="opacity:0.5">${g.lat.toFixed(5)}, ${g.lng.toFixed(5)}<\/span>
+          <span style="opacity:0.35">${g.markedBy?.includes('seed') ? 'approx' : '📍 GPS'}<\/span>
+        <\/div>`
+      ).join('');
+}
+
+async function adminSaveAllGreens() {
+  const course = adminSelectedCourse;
+  if (!course) return;
+
+  const kvId     = getGpsCourseId(course);
+  const statusEl = document.getElementById('admin-save-status');
+  const btn      = document.querySelector('[onclick="adminSaveAllGreens()"]');
+
+  if (btn) { btn.textContent = 'Saving…'; btn.disabled = true; }
+  statusEl.textContent = '';
+
+  const holeCount = course.holes?.length || 18;
+  let ok = 0, skipped = 0, fail = 0;
+
+  for (let i = 1; i <= holeCount; i++) {
+    const lat = parseFloat(document.getElementById(`admin-lat-${i}`)?.value);
+    const lng = parseFloat(document.getElementById(`admin-lng-${i}`)?.value);
+
+    if (!lat || !lng || isNaN(lat) || isNaN(lng)) { skipped++; continue; }
+
+    try {
+      const res  = await fetch(`${WORKER_URL}/greens/${encodeURIComponent(kvId)}/${i}`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ lat, lng, markedBy: state.profile?.name || 'admin' })
+      });
+      const data = await res.json();
+      if (data.ok) ok++;
+      else fail++;
+    } catch(e) { fail++; }
+
+    await new Promise(r => setTimeout(r, 60));
+  }
+
+  if (btn) { btn.textContent = 'Save All to Shared Database'; btn.disabled = false; }
+  statusEl.style.color = fail > 0 ? '#e87070' : '#6dd46d';
+  statusEl.textContent = `✓ ${ok} saved${skipped ? `, ${skipped} skipped (no coords)` : ''}${fail ? `, ${fail} failed` : ''}`;
+
+  // Refresh the view
+  await adminLoadCourse();
+}
+
 // ===== GPS DISTANCE ENGINE =====
 // Haversine formula — returns distance in yards between two lat/lng points
 function haversineYards(lat1, lng1, lat2, lng2) {
@@ -7313,6 +7614,7 @@ try {
 
     saveState();
     renderCourseList();
+    updateFilterTabVisibility();
   } catch(e) {
     // Silent fail — offline or Worker unreachable, use local cache
   }
