@@ -95,8 +95,7 @@
 
   /* ---- COURSE TYPE BADGES ---- */
   .course-type-badge { font-size: 10px; font-weight: 600; border-radius: 100px; padding: 2px 8px; letter-spacing: 0.3px; text-transform: uppercase; }
-  .badge-regulation { background: rgba(61,122,61,0.3); color: #6dd46d; border: 1px solid rgba(61,122,61,0.4); }
-  .badge-municipal { background: rgba(74,144,217,0.25); color: #7ec8ff; border: 1px solid rgba(74,144,217,0.3); }
+  .badge-executive { background: rgba(200,168,75,0.2); color: var(--flag); border: 1px solid rgba(200,168,75,0.3); }
   .badge-executive { background: rgba(200,168,75,0.25); color: var(--flag); border: 1px solid rgba(200,168,75,0.3); }
   .badge-par3 { background: rgba(142,68,173,0.25); color: #c39bd3; border: 1px solid rgba(142,68,173,0.3); }
   .region-header { padding: 10px 16px 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--flag); opacity: 0.8; background: rgba(0,0,0,0.15); border-bottom: 1px solid var(--border); }
@@ -768,7 +767,6 @@
       <button class="filter-tab"     onclick="setFilter('CA',this)">🐻 California</button>
       <button class="filter-tab"     onclick="setFilter('IL',this)">🦅 Illinois</button>
       <button class="filter-tab"     onclick="setFilter('MA',this)">🦞 Massachusetts</button>
-      <button class="filter-tab"     onclick="setFilter('municipal',this)">🏛 Municipal</button>
       <button class="filter-tab"     onclick="setFilter('executive',this)">⚡ Executive</button>
     </div>
     <div id="course-list"></div>
@@ -2301,7 +2299,7 @@ const COURSES = [
     ]},
 
   // ── ORANGE COUNTY MUNICIPAL & EXECUTIVE ──────────────────────────
-  { id: 36, region: "Orange County", type: "municipal", name: "Dad Miller Golf Course", city: "Anaheim, CA",
+  { id: 36, region: "Orange County", name: "Dad Miller Golf Course", city: "Anaheim, CA",
     tees: [
       { name: "Championship", color: "#222",    yards: 5890, rating: 67.8, slope: 114 },
       { name: "Regular",      color: "#fff",    yards: 5622, rating: 66.6, slope: 111 },
@@ -2315,7 +2313,7 @@ const COURSES = [
       {par:3,yards:[208,201,167],hcp:4}, {par:4,yards:[372,346,315],hcp:12},{par:5,yards:[507,495,470],hcp:8}
     ]},
 
-  { id: 37, region: "Orange County", type: "municipal", name: "Coyote Hills Golf Course", city: "Fullerton, CA",
+  { id: 37, region: "Orange County", name: "Coyote Hills Golf Course", city: "Fullerton, CA",
     tees: [
       { name: "Gold", color: "#c8a84b", yards: 6501, rating: 72.1, slope: 134 },
       { name: "Blue", color: "#3366cc", yards: 6189, rating: 70.4, slope: 129 },
@@ -2330,7 +2328,7 @@ const COURSES = [
       {par:3,yards:[175,165,154,135],hcp:18},{par:4,yards:[395,375,351,306],hcp:6},{par:4,yards:[380,361,338,295],hcp:12}
     ]},
 
-  { id: 38, region: "Orange County", type: "municipal", name: "Costa Mesa Golf Course (Los Lagos)", city: "Costa Mesa, CA",
+  { id: 38, region: "Orange County", name: "Costa Mesa Golf Course (Los Lagos)", city: "Costa Mesa, CA",
     tees: [
       { name: "Blue", color: "#3366cc", yards: 6520, rating: 70.8, slope: 118 },
       { name: "White", color: "#fff", yards: 6148, rating: 68.9, slope: 113 },
@@ -2344,7 +2342,7 @@ const COURSES = [
       {par:3,yards:[178,167,150],hcp:12},{par:4,yards:[372,349,313],hcp:6},{par:4,yards:[357,335,301],hcp:10}
     ]},
 
-  { id: 39, region: "Orange County", type: "municipal", name: "Costa Mesa Golf Course (Mesa Linda)", city: "Costa Mesa, CA",
+  { id: 39, region: "Orange County", name: "Costa Mesa Golf Course (Mesa Linda)", city: "Costa Mesa, CA",
     tees: [
       { name: "Blue", color: "#3366cc", yards: 5600, rating: 66.9, slope: 108 },
       { name: "White", color: "#fff", yards: 5280, rating: 65.2, slope: 104 },
@@ -2358,7 +2356,7 @@ const COURSES = [
       {par:3,yards:[152,143,130],hcp:10},{par:4,yards:[338,318,290],hcp:8},{par:4,yards:[340,320,292],hcp:2}
     ]},
 
-  { id: 40, region: "Orange County", type: "municipal", name: "Mile Square Golf Course (Regulation)", city: "Fountain Valley, CA",
+  { id: 40, region: "Orange County", name: "Mile Square Golf Course (Regulation)", city: "Fountain Valley, CA",
     tees: [
       { name: "Blue", color: "#3366cc", yards: 6534, rating: 71.0, slope: 118 },
       { name: "White", color: "#fff", yards: 6168, rating: 69.2, slope: 114 },
@@ -2372,7 +2370,7 @@ const COURSES = [
       {par:3,yards:[172,162,145],hcp:12},{par:4,yards:[365,344,308],hcp:6},{par:4,yards:[368,347,311],hcp:10}
     ]},
 
-  { id: 41, region: "Orange County", type: "municipal", name: "Fullerton Golf Club", city: "Fullerton, CA",
+  { id: 41, region: "Orange County", name: "Fullerton Golf Club", city: "Fullerton, CA",
     tees: [
       { name: "Blue", color: "#3366cc", yards: 6288, rating: 69.8, slope: 116 },
       { name: "White", color: "#fff", yards: 5922, rating: 68.0, slope: 111 },
@@ -2386,7 +2384,7 @@ const COURSES = [
       {par:3,yards:[175,165,146],hcp:12},{par:4,yards:[358,337,299],hcp:6},{par:4,yards:[352,331,294],hcp:10}
     ]},
 
-  { id: 42, region: "Orange County", type: "municipal", name: "Santa Ana Golf Course", city: "Santa Ana, CA",
+  { id: 42, region: "Orange County", name: "Santa Ana Golf Course", city: "Santa Ana, CA",
     tees: [
       { name: "Blue", color: "#3366cc", yards: 5918, rating: 67.8, slope: 110 },
       { name: "White", color: "#fff", yards: 5572, rating: 66.1, slope: 106 },
@@ -2528,7 +2526,7 @@ const COURSES = [
       {par:4,yards:[280,269],hcp:11}
     ]},
 
-  { id: 53, region: "Orange County", type: "municipal", name: "RiverView Golf Course", city: "Santa Ana, CA",
+  { id: 53, region: "Orange County", name: "RiverView Golf Course", city: "Santa Ana, CA",
     address: "1800 W Santa Clara Ave, Santa Ana, CA 92706", phone: "(714) 543-1115",
     tees: [
       { name: "Blue",  color: "#3366cc", yards: 6191, rating: 68.4, slope: 120 },
@@ -2547,7 +2545,7 @@ const COURSES = [
       {par:3,yards:[194,181,169],hcp:14}
     ]},
 
-  { id: 54, region: "Orange County", type: "municipal", name: "Willowick Golf Course", city: "Santa Ana, CA",
+  { id: 54, region: "Orange County", name: "Willowick Golf Course", city: "Santa Ana, CA",
     address: "3017 W 5th St, Santa Ana, CA 92703", phone: "(714) 790-0115",
     tees: [
       { name: "Blue",  color: "#3366cc", yards: 6061, rating: 67.7, slope: 110 },
@@ -2600,7 +2598,7 @@ const COURSES = [
       {par:5,yards:[554,542,519,447,373],hcp:6}
     ]},
 
-  { id: 57, region: "Long Beach", type: "municipal", name: "Skylinks Golf Course", city: "Long Beach, CA",
+  { id: 57, region: "Long Beach", name: "Skylinks Golf Course", city: "Long Beach, CA",
     address: "4800 E Wardlow Rd, Long Beach, CA 90808", phone: "(562) 421-3388",
     tees: [
       { name: "Black", color: "#222",    yards: 6909, rating: 72.7, slope: 127 },
@@ -2621,7 +2619,7 @@ const COURSES = [
       {par:4,yards:[450,445,420,379,366],hcp:4}
     ]},
 
-  { id: 58, region: "Long Beach", type: "municipal", name: "El Dorado Park Golf Course", city: "Long Beach, CA",
+  { id: 58, region: "Long Beach", name: "El Dorado Park Golf Course", city: "Long Beach, CA",
     address: "2400 N Studebaker Rd, Long Beach, CA 90815", phone: "(562) 430-5411",
     tees: [
       { name: "Black", color: "#222",    yards: 6968, rating: 72.8, slope: 130 },
@@ -2641,7 +2639,7 @@ const COURSES = [
       {par:5,yards:[521,491,479,408],hcp:18}
     ]},
 
-  { id: 59, region: "Long Beach", type: "municipal", name: "Recreation Park Golf Course (18)", city: "Long Beach, CA",
+  { id: 59, region: "Long Beach", name: "Recreation Park Golf Course (18)", city: "Long Beach, CA",
     address: "4700 E Park Dr, Long Beach, CA 90804", phone: "(562) 494-5000",
     tees: [
       { name: "Blue",  color: "#3366cc", yards: 6368, rating: 70.4, slope: 116 },
@@ -2688,7 +2686,7 @@ const COURSES = [
       {par:3,yards:[205],hcp:16},{par:4,yards:[435],hcp:12},{par:4,yards:[330],hcp:14}
     ]},
 
-  { id:136, region:"Western MA", type:"municipal", name:"Ledges Golf Club", city:"South Hadley, MA",
+  { id:136, region:"Western MA", name:"Ledges Golf Club", city:"South Hadley, MA",
     tees:[
       {name:"Black",color:"#222",yards:6507,rating:71.8,slope:129},
       {name:"Blue", color:"#3366cc",yards:6110,rating:69.9,slope:126},
@@ -2765,7 +2763,7 @@ const COURSES = [
     tees:[{name:"Blue",color:"#3366cc",yards:6432,rating:70.3,slope:124},{name:"White",color:"#fff",yards:6033,rating:68.4,slope:119},{name:"Red",color:"#cc3333",yards:5350,rating:70.6,slope:119}],
     holes:[{par:4,yards:[385],hcp:5},{par:4,yards:[365],hcp:9},{par:3,yards:[178],hcp:17},{par:5,yards:[515],hcp:1},{par:4,yards:[395],hcp:3},{par:4,yards:[355],hcp:11},{par:3,yards:[168],hcp:15},{par:5,yards:[505],hcp:7},{par:4,yards:[405],hcp:13},{par:4,yards:[380],hcp:6},{par:4,yards:[370],hcp:10},{par:3,yards:[172],hcp:16},{par:5,yards:[520],hcp:2},{par:4,yards:[390],hcp:4},{par:4,yards:[360],hcp:12},{par:3,yards:[162],hcp:18},{par:4,yards:[380],hcp:8},{par:5,yards:[510],hcp:14}]},
 
-  { id:89,  region:"DuPage County", type:"municipal", name:"Bloomingdale Golf Club", city:"Bloomingdale, IL",
+  { id:89,  region:"DuPage County", name:"Bloomingdale Golf Club", city:"Bloomingdale, IL",
     tees:[{name:"Blue",color:"#3366cc",yards:6601,rating:71.5,slope:128},{name:"White",color:"#fff",yards:6211,rating:69.5,slope:122},{name:"Red",color:"#cc3333",yards:5461,rating:71.1,slope:121}],
     holes:[{par:4,yards:[400],hcp:5},{par:4,yards:[380],hcp:9},{par:3,yards:[182],hcp:17},{par:5,yards:[530],hcp:1},{par:4,yards:[410],hcp:3},{par:4,yards:[370],hcp:11},{par:3,yards:[172],hcp:15},{par:5,yards:[520],hcp:7},{par:4,yards:[415],hcp:13},{par:4,yards:[390],hcp:6},{par:4,yards:[378],hcp:10},{par:3,yards:[180],hcp:16},{par:5,yards:[535],hcp:2},{par:4,yards:[402],hcp:4},{par:4,yards:[368],hcp:12},{par:3,yards:[168],hcp:18},{par:4,yards:[395],hcp:8},{par:5,yards:[521],hcp:14}]},
 
@@ -2777,7 +2775,7 @@ const COURSES = [
     tees:[{name:"Black",color:"#222",yards:6786,rating:72.5,slope:130},{name:"Blue",color:"#3366cc",yards:6423,rating:70.7,slope:126},{name:"White",color:"#fff",yards:5991,rating:68.6,slope:121}],
     holes:[{par:4,yards:[405],hcp:5},{par:4,yards:[385],hcp:9},{par:3,yards:[188],hcp:17},{par:5,yards:[542],hcp:1},{par:4,yards:[415],hcp:3},{par:4,yards:[374],hcp:11},{par:3,yards:[178],hcp:15},{par:5,yards:[532],hcp:7},{par:4,yards:[420],hcp:13},{par:4,yards:[395],hcp:6},{par:4,yards:[382],hcp:10},{par:3,yards:[184],hcp:16},{par:5,yards:[548],hcp:2},{par:4,yards:[408],hcp:4},{par:4,yards:[372],hcp:12},{par:3,yards:[174],hcp:18},{par:4,yards:[399],hcp:8},{par:5,yards:[538],hcp:14}]},
 
-  { id:92,  region:"DuPage County", type:"municipal", name:"Village Links of Glen Ellyn", city:"Glen Ellyn, IL",
+  { id:92,  region:"DuPage County", name:"Village Links of Glen Ellyn", city:"Glen Ellyn, IL",
     tees:[{name:"Black",color:"#222",yards:6737,rating:72.4,slope:133},{name:"Blue",color:"#3366cc",yards:6337,rating:70.4,slope:127},{name:"White",color:"#fff",yards:5929,rating:68.4,slope:122},{name:"Red",color:"#cc3333",yards:5213,rating:69.9,slope:118}],
     holes:[{par:4,yards:[402],hcp:5},{par:4,yards:[382],hcp:9},{par:3,yards:[186],hcp:17},{par:5,yards:[538],hcp:1},{par:4,yards:[412],hcp:3},{par:4,yards:[372],hcp:11},{par:3,yards:[176],hcp:15},{par:5,yards:[528],hcp:7},{par:4,yards:[418],hcp:13},{par:4,yards:[392],hcp:6},{par:4,yards:[380],hcp:10},{par:3,yards:[182],hcp:16},{par:5,yards:[544],hcp:2},{par:4,yards:[405],hcp:4},{par:4,yards:[370],hcp:12},{par:3,yards:[172],hcp:18},{par:4,yards:[396],hcp:8},{par:5,yards:[534],hcp:14}]},
 
@@ -2789,15 +2787,15 @@ const COURSES = [
     tees:[{name:"Blue",color:"#3366cc",yards:6608,rating:71.1,slope:124},{name:"White",color:"#fff",yards:6185,rating:69.1,slope:118},{name:"Red",color:"#cc3333",yards:5542,rating:71.5,slope:120}],
     holes:[{par:4,yards:[400],hcp:5},{par:4,yards:[380],hcp:9},{par:3,yards:[185],hcp:17},{par:5,yards:[530],hcp:1},{par:4,yards:[410],hcp:3},{par:4,yards:[370],hcp:11},{par:3,yards:[175],hcp:15},{par:5,yards:[520],hcp:7},{par:4,yards:[415],hcp:13},{par:4,yards:[390],hcp:6},{par:4,yards:[378],hcp:10},{par:3,yards:[180],hcp:16},{par:5,yards:[535],hcp:2},{par:4,yards:[402],hcp:4},{par:4,yards:[368],hcp:12},{par:3,yards:[170],hcp:18},{par:4,yards:[395],hcp:8},{par:5,yards:[525],hcp:14}]},
 
-  { id:95,  region:"Cook County", type:"municipal", name:"George W. Dunne National Golf Course", city:"Oak Forest, IL",
+  { id:95,  region:"Cook County", name:"George W. Dunne National Golf Course", city:"Oak Forest, IL",
     tees:[{name:"Black",color:"#222",yards:7205,rating:74.5,slope:130},{name:"Blue",color:"#3366cc",yards:6777,rating:72.4,slope:125},{name:"White",color:"#fff",yards:6299,rating:70.2,slope:120},{name:"Red",color:"#cc3333",yards:5608,rating:72.1,slope:124}],
     holes:[{par:4,yards:[435],hcp:5},{par:4,yards:[415],hcp:9},{par:3,yards:[195],hcp:17},{par:5,yards:[555],hcp:1},{par:4,yards:[445],hcp:3},{par:4,yards:[400],hcp:11},{par:3,yards:[185],hcp:15},{par:5,yards:[545],hcp:7},{par:4,yards:[425],hcp:13},{par:4,yards:[420],hcp:6},{par:4,yards:[408],hcp:10},{par:3,yards:[190],hcp:16},{par:5,yards:[560],hcp:2},{par:4,yards:[440],hcp:4},{par:4,yards:[395],hcp:12},{par:3,yards:[180],hcp:18},{par:4,yards:[428],hcp:8},{par:5,yards:[550],hcp:14}]},
 
-  { id:96,  region:"Cook County", type:"municipal", name:"Flagg Creek Golf Course", city:"Countryside, IL",
+  { id:96,  region:"Cook County", name:"Flagg Creek Golf Course", city:"Countryside, IL",
     tees:[{name:"Blue",color:"#3366cc",yards:6303,rating:69.8,slope:122},{name:"White",color:"#fff",yards:5893,rating:67.6,slope:116},{name:"Red",color:"#cc3333",yards:5244,rating:69.5,slope:118}],
     holes:[{par:4,yards:[378],hcp:5},{par:4,yards:[360],hcp:9},{par:3,yards:[172],hcp:17},{par:5,yards:[510],hcp:1},{par:4,yards:[388],hcp:3},{par:4,yards:[352],hcp:11},{par:3,yards:[162],hcp:15},{par:5,yards:[500],hcp:7},{par:4,yards:[398],hcp:13},{par:4,yards:[372],hcp:6},{par:4,yards:[358],hcp:10},{par:3,yards:[168],hcp:16},{par:5,yards:[514],hcp:2},{par:4,yards:[381],hcp:4},{par:4,yards:[354],hcp:12},{par:3,yards:[158],hcp:18},{par:4,yards:[374],hcp:8},{par:5,yards:[501],hcp:14}]},
 
-  { id:97,  region:"Cook County", type:"municipal", name:"Chick Evans Golf Course", city:"Morton Grove, IL",
+  { id:97,  region:"Cook County", name:"Chick Evans Golf Course", city:"Morton Grove, IL",
     tees:[{name:"Blue",color:"#3366cc",yards:6400,rating:70.1,slope:116},{name:"White",color:"#fff",yards:6003,rating:68.2,slope:112},{name:"Red",color:"#cc3333",yards:5348,rating:70.2,slope:115}],
     holes:[{par:4,yards:[384],hcp:5},{par:4,yards:[365],hcp:9},{par:3,yards:[174],hcp:17},{par:5,yards:[514],hcp:1},{par:4,yards:[392],hcp:3},{par:4,yards:[355],hcp:11},{par:3,yards:[165],hcp:15},{par:5,yards:[504],hcp:7},{par:4,yards:[400],hcp:13},{par:4,yards:[376],hcp:6},{par:4,yards:[362],hcp:10},{par:3,yards:[170],hcp:16},{par:5,yards:[518],hcp:2},{par:4,yards:[385],hcp:4},{par:4,yards:[356],hcp:12},{par:3,yards:[161],hcp:18},{par:4,yards:[378],hcp:8},{par:5,yards:[505],hcp:14}]},
 
@@ -2821,7 +2819,7 @@ const COURSES = [
     tees:[{name:"Black",color:"#222",yards:6756,rating:72.4,slope:131},{name:"Blue",color:"#3366cc",yards:6348,rating:70.4,slope:125},{name:"White",color:"#fff",yards:5932,rating:68.4,slope:120},{name:"Red",color:"#cc3333",yards:5248,rating:70.0,slope:118}],
     holes:[{par:4,yards:[406],hcp:5},{par:4,yards:[386],hcp:9},{par:3,yards:[188],hcp:17},{par:5,yards:[540],hcp:1},{par:4,yards:[416],hcp:3},{par:4,yards:[374],hcp:11},{par:3,yards:[178],hcp:15},{par:5,yards:[530],hcp:7},{par:4,yards:[420],hcp:13},{par:4,yards:[396],hcp:6},{par:4,yards:[382],hcp:10},{par:3,yards:[184],hcp:16},{par:5,yards:[546],hcp:2},{par:4,yards:[408],hcp:4},{par:4,yards:[372],hcp:12},{par:3,yards:[174],hcp:18},{par:4,yards:[400],hcp:8},{par:5,yards:[534],hcp:14}]},
 
-  { id:103, region:"Lake County", type:"municipal", name:"Bonnie Brook Golf Course", city:"Waukegan, IL",
+  { id:103, region:"Lake County", name:"Bonnie Brook Golf Course", city:"Waukegan, IL",
     tees:[{name:"Blue",color:"#3366cc",yards:6598,rating:71.2,slope:124},{name:"White",color:"#fff",yards:6188,rating:69.2,slope:118},{name:"Red",color:"#cc3333",yards:5484,rating:70.8,slope:119}],
     holes:[{par:4,yards:[398],hcp:5},{par:4,yards:[378],hcp:9},{par:3,yards:[182],hcp:17},{par:5,yards:[532],hcp:1},{par:4,yards:[408],hcp:3},{par:4,yards:[368],hcp:11},{par:3,yards:[172],hcp:15},{par:5,yards:[522],hcp:7},{par:4,yards:[414],hcp:13},{par:4,yards:[388],hcp:6},{par:4,yards:[376],hcp:10},{par:3,yards:[178],hcp:16},{par:5,yards:[538],hcp:2},{par:4,yards:[400],hcp:4},{par:4,yards:[366],hcp:12},{par:3,yards:[168],hcp:18},{par:4,yards:[392],hcp:8},{par:5,yards:[524],hcp:14}]},
 
@@ -2857,7 +2855,7 @@ const COURSES = [
     tees:[{name:"Blue",color:"#3366cc",yards:6536,rating:71.2,slope:126},{name:"White",color:"#fff",yards:6138,rating:69.3,slope:121},{name:"Red",color:"#cc3333",yards:5442,rating:71.0,slope:119}],
     holes:[{par:4,yards:[394],hcp:5},{par:4,yards:[374],hcp:9},{par:3,yards:[182],hcp:17},{par:5,yards:[528],hcp:1},{par:4,yards:[404],hcp:3},{par:4,yards:[366],hcp:11},{par:3,yards:[174],hcp:15},{par:5,yards:[520],hcp:7},{par:4,yards:[410],hcp:13},{par:4,yards:[386],hcp:6},{par:4,yards:[372],hcp:10},{par:3,yards:[178],hcp:16},{par:5,yards:[532],hcp:2},{par:4,yards:[396],hcp:4},{par:4,yards:[364],hcp:12},{par:3,yards:[170],hcp:18},{par:4,yards:[390],hcp:8},{par:5,yards:[522],hcp:14}]},
 
-  { id:112, region:"Lake County", type:"municipal", name:"Deerpath Golf Course", city:"Lake Forest, IL",
+  { id:112, region:"Lake County", name:"Deerpath Golf Course", city:"Lake Forest, IL",
     tees:[{name:"Blue",color:"#3366cc",yards:6308,rating:69.9,slope:120},{name:"White",color:"#fff",yards:5912,rating:68.0,slope:115},{name:"Red",color:"#cc3333",yards:5248,rating:69.7,slope:116}],
     holes:[{par:4,yards:[380],hcp:5},{par:4,yards:[360],hcp:9},{par:3,yards:[172],hcp:17},{par:5,yards:[512],hcp:1},{par:4,yards:[390],hcp:3},{par:4,yards:[352],hcp:11},{par:3,yards:[164],hcp:15},{par:5,yards:[504],hcp:7},{par:4,yards:[398],hcp:13},{par:4,yards:[372],hcp:6},{par:4,yards:[358],hcp:10},{par:3,yards:[168],hcp:16},{par:5,yards:[516],hcp:2},{par:4,yards:[382],hcp:4},{par:4,yards:[350],hcp:12},{par:3,yards:[160],hcp:18},{par:4,yards:[376],hcp:8},{par:5,yards:[504],hcp:14}]},
 
@@ -2873,7 +2871,7 @@ const COURSES = [
     tees:[{name:"Black",color:"#222",yards:6811,rating:72.7,slope:130},{name:"Blue",color:"#3366cc",yards:6401,rating:70.7,slope:125},{name:"White",color:"#fff",yards:5981,rating:68.7,slope:120},{name:"Red",color:"#cc3333",yards:5291,rating:70.4,slope:118}],
     holes:[{par:4,yards:[410],hcp:5},{par:4,yards:[390],hcp:9},{par:3,yards:[186],hcp:17},{par:5,yards:[542],hcp:1},{par:4,yards:[420],hcp:3},{par:4,yards:[376],hcp:11},{par:3,yards:[176],hcp:15},{par:5,yards:[532],hcp:7},{par:4,yards:[416],hcp:13},{par:4,yards:[396],hcp:6},{par:4,yards:[384],hcp:10},{par:3,yards:[182],hcp:16},{par:5,yards:[548],hcp:2},{par:4,yards:[414],hcp:4},{par:4,yards:[374],hcp:12},{par:3,yards:[172],hcp:18},{par:4,yards:[404],hcp:8},{par:5,yards:[536],hcp:14}]},
 
-  { id:116, region:"Kane County", type:"municipal", name:"Bartlett Hills Golf Club", city:"Bartlett, IL",
+  { id:116, region:"Kane County", name:"Bartlett Hills Golf Club", city:"Bartlett, IL",
     tees:[{name:"Blue",color:"#3366cc",yards:6327,rating:70.2,slope:124},{name:"White",color:"#fff",yards:5937,rating:68.2,slope:119},{name:"Red",color:"#cc3333",yards:5271,rating:70.0,slope:117}],
     holes:[{par:4,yards:[382],hcp:5},{par:4,yards:[362],hcp:9},{par:3,yards:[174],hcp:17},{par:5,yards:[514],hcp:1},{par:4,yards:[392],hcp:3},{par:4,yards:[354],hcp:11},{par:3,yards:[166],hcp:15},{par:5,yards:[506],hcp:7},{par:4,yards:[400],hcp:13},{par:4,yards:[374],hcp:6},{par:4,yards:[360],hcp:10},{par:3,yards:[170],hcp:16},{par:5,yards:[518],hcp:2},{par:4,yards:[384],hcp:4},{par:4,yards:[352],hcp:12},{par:3,yards:[162],hcp:18},{par:4,yards:[378],hcp:8},{par:5,yards:[506],hcp:14}]},
 
@@ -2885,7 +2883,7 @@ const COURSES = [
     tees:[{name:"Blue",color:"#3366cc",yards:6466,rating:71.1,slope:125},{name:"White",color:"#fff",yards:6072,rating:69.1,slope:120},{name:"Red",color:"#cc3333",yards:5394,rating:70.8,slope:118}],
     holes:[{par:4,yards:[390],hcp:5},{par:4,yards:[370],hcp:9},{par:3,yards:[178],hcp:17},{par:5,yards:[522],hcp:1},{par:4,yards:[400],hcp:3},{par:4,yards:[360],hcp:11},{par:3,yards:[168],hcp:15},{par:5,yards:[514],hcp:7},{par:4,yards:[406],hcp:13},{par:4,yards:[380],hcp:6},{par:4,yards:[366],hcp:10},{par:3,yards:[174],hcp:16},{par:5,yards:[526],hcp:2},{par:4,yards:[392],hcp:4},{par:4,yards:[358],hcp:12},{par:3,yards:[164],hcp:18},{par:4,yards:[384],hcp:8},{par:5,yards:[516],hcp:14}]},
 
-  { id:119, region:"Cook County", type:"municipal", name:"Glencoe Golf Club", city:"Glencoe, IL",
+  { id:119, region:"Cook County", name:"Glencoe Golf Club", city:"Glencoe, IL",
     tees:[{name:"Blue",color:"#3366cc",yards:6258,rating:69.4,slope:119},{name:"White",color:"#fff",yards:5862,rating:67.5,slope:114},{name:"Red",color:"#cc3333",yards:5208,rating:69.2,slope:114}],
     holes:[{par:4,yards:[376],hcp:5},{par:4,yards:[356],hcp:9},{par:3,yards:[168],hcp:17},{par:5,yards:[508],hcp:1},{par:4,yards:[386],hcp:3},{par:4,yards:[348],hcp:11},{par:3,yards:[160],hcp:15},{par:5,yards:[500],hcp:7},{par:4,yards:[394],hcp:13},{par:4,yards:[368],hcp:6},{par:4,yards:[354],hcp:10},{par:3,yards:[164],hcp:16},{par:5,yards:[512],hcp:2},{par:4,yards:[378],hcp:4},{par:4,yards:[346],hcp:12},{par:3,yards:[156],hcp:18},{par:4,yards:[372],hcp:8},{par:5,yards:[499],hcp:14}]},
 
@@ -2893,7 +2891,7 @@ const COURSES = [
     tees:[{name:"Blue",color:"#3366cc",yards:6597,rating:71.6,slope:125},{name:"White",color:"#fff",yards:6197,rating:69.7,slope:120},{name:"Red",color:"#cc3333",yards:5497,rating:71.3,slope:119}],
     holes:[{par:4,yards:[398],hcp:5},{par:4,yards:[378],hcp:9},{par:3,yards:[182],hcp:17},{par:5,yards:[532],hcp:1},{par:4,yards:[408],hcp:3},{par:4,yards:[368],hcp:11},{par:3,yards:[172],hcp:15},{par:5,yards:[522],hcp:7},{par:4,yards:[414],hcp:13},{par:4,yards:[388],hcp:6},{par:4,yards:[376],hcp:10},{par:3,yards:[178],hcp:16},{par:5,yards:[538],hcp:2},{par:4,yards:[400],hcp:4},{par:4,yards:[366],hcp:12},{par:3,yards:[168],hcp:18},{par:4,yards:[392],hcp:8},{par:5,yards:[524],hcp:14}]},
 
-  { id:121, region:"Cook County", type:"municipal", name:"Deerfield Golf Club", city:"Deerfield, IL",
+  { id:121, region:"Cook County", name:"Deerfield Golf Club", city:"Deerfield, IL",
     tees:[{name:"Blue",color:"#3366cc",yards:6296,rating:69.8,slope:118},{name:"White",color:"#fff",yards:5900,rating:67.8,slope:113},{name:"Red",color:"#cc3333",yards:5234,rating:69.6,slope:114}],
     holes:[{par:4,yards:[379],hcp:5},{par:4,yards:[360],hcp:9},{par:3,yards:[171],hcp:17},{par:5,yards:[511],hcp:1},{par:4,yards:[389],hcp:3},{par:4,yards:[351],hcp:11},{par:3,yards:[163],hcp:15},{par:5,yards:[503],hcp:7},{par:4,yards:[397],hcp:13},{par:4,yards:[371],hcp:6},{par:4,yards:[357],hcp:10},{par:3,yards:[167],hcp:16},{par:5,yards:[515],hcp:2},{par:4,yards:[381],hcp:4},{par:4,yards:[349],hcp:12},{par:3,yards:[159],hcp:18},{par:4,yards:[375],hcp:8},{par:5,yards:[502],hcp:14}]},
 
@@ -2909,15 +2907,15 @@ const COURSES = [
     tees:[{name:"Black",color:"#222",yards:6841,rating:72.7,slope:133},{name:"Blue",color:"#3366cc",yards:6427,rating:70.7,slope:127},{name:"White",color:"#fff",yards:6005,rating:68.6,slope:122},{name:"Red",color:"#cc3333",yards:5315,rating:70.4,slope:120}],
     holes:[{par:4,yards:[412],hcp:5},{par:4,yards:[392],hcp:9},{par:3,yards:[188],hcp:17},{par:5,yards:[544],hcp:1},{par:4,yards:[422],hcp:3},{par:4,yards:[378],hcp:11},{par:3,yards:[178],hcp:15},{par:5,yards:[534],hcp:7},{par:4,yards:[418],hcp:13},{par:4,yards:[398],hcp:6},{par:4,yards:[386],hcp:10},{par:3,yards:[184],hcp:16},{par:5,yards:[550],hcp:2},{par:4,yards:[416],hcp:4},{par:4,yards:[376],hcp:12},{par:3,yards:[174],hcp:18},{par:4,yards:[406],hcp:8},{par:5,yards:[538],hcp:14}]},
 
-  { id:125, region:"DuPage County", type:"municipal", name:"Lombard Golf Course", city:"Lombard, IL",
+  { id:125, region:"DuPage County", name:"Lombard Golf Course", city:"Lombard, IL",
     tees:[{name:"White",color:"#fff",yards:3162,rating:34.6,slope:109},{name:"Red",color:"#cc3333",yards:2874,rating:36.2,slope:111}],
     holes:[{par:4,yards:[355],hcp:1},{par:3,yards:[152],hcp:9},{par:4,yards:[310],hcp:5},{par:4,yards:[318],hcp:3},{par:3,yards:[174],hcp:7},{par:5,yards:[480],hcp:2},{par:3,yards:[145],hcp:8},{par:4,yards:[338],hcp:6},{par:4,yards:[490],hcp:4}]},
 
-  { id:126, region:"DuPage County", type:"municipal", name:"Willow Crest Golf Club", city:"Oak Brook, IL",
+  { id:126, region:"DuPage County", name:"Willow Crest Golf Club", city:"Oak Brook, IL",
     tees:[{name:"Blue",color:"#3366cc",yards:6274,rating:69.6,slope:118},{name:"White",color:"#fff",yards:5882,rating:67.6,slope:113},{name:"Red",color:"#cc3333",yards:5218,rating:69.4,slope:112}],
     holes:[{par:4,yards:[378],hcp:5},{par:4,yards:[358],hcp:9},{par:3,yards:[168],hcp:17},{par:5,yards:[508],hcp:1},{par:4,yards:[388],hcp:3},{par:4,yards:[350],hcp:11},{par:3,yards:[160],hcp:15},{par:5,yards:[500],hcp:7},{par:4,yards:[396],hcp:13},{par:4,yards:[370],hcp:6},{par:4,yards:[356],hcp:10},{par:3,yards:[164],hcp:16},{par:5,yards:[512],hcp:2},{par:4,yards:[380],hcp:4},{par:4,yards:[348],hcp:12},{par:3,yards:[156],hcp:18},{par:4,yards:[374],hcp:8},{par:5,yards:[497],hcp:14}]},
 
-  { id:127, region:"DuPage County", type:"municipal", name:"Green Meadows Golf Course", city:"Westmont, IL",
+  { id:127, region:"DuPage County", name:"Green Meadows Golf Course", city:"Westmont, IL",
     tees:[{name:"White",color:"#fff",yards:5834,rating:67.2,slope:110},{name:"Red",color:"#cc3333",yards:5184,rating:69.1,slope:112}],
     holes:[{par:4,yards:[352],hcp:5},{par:4,yards:[334],hcp:9},{par:3,yards:[158],hcp:17},{par:5,yards:[484],hcp:1},{par:4,yards:[362],hcp:3},{par:4,yards:[326],hcp:11},{par:3,yards:[150],hcp:15},{par:5,yards:[476],hcp:7},{par:4,yards:[372],hcp:13},{par:4,yards:[346],hcp:6},{par:4,yards:[332],hcp:10},{par:3,yards:[154],hcp:16},{par:5,yards:[488],hcp:2},{par:4,yards:[355],hcp:4},{par:4,yards:[324],hcp:12},{par:3,yards:[147],hcp:18},{par:4,yards:[349],hcp:8},{par:5,yards:[476],hcp:14}]},
 
@@ -3168,7 +3166,6 @@ function updateFilterTabVisibility() {
     'CA': c => getCourseState(c) === 'CA',
     'IL': c => getCourseState(c) === 'IL',
     'MA': c => getCourseState(c) === 'MA',
-    'municipal': c => c.type === 'municipal',
     'executive': c => c.type === 'executive' || c.type === 'par3',
   };
   document.querySelectorAll('.filter-tab[onclick]').forEach(btn => {
@@ -3185,11 +3182,10 @@ function updateFilterTabVisibility() {
 }
 
 function getTypeLabel(c) {
-  const t       = c.type || 'regulation';
+  const t        = c.type || '';
   const totalPar = c.holes ? c.holes.reduce((s,h)=>s+h.par,0) : 72;
-  if (t === 'municipal') return { label:'Municipal', cls:'badge-municipal' };
-  if (t === 'executive') return { label: totalPar <= 30 ? 'Par 3' : 'Executive', cls:'badge-executive' };
-  return { label:'Public', cls:'badge-regulation' };
+  if (t === 'executive' || t === 'par3') return { label: totalPar <= 30 ? 'Par 3' : 'Executive', cls:'badge-executive' };
+  return { label: '', cls: '' }; // no badge for standard public/regulation courses
 }
 
 // Get all available courses — built-in + KV-cached community courses
@@ -3224,7 +3220,6 @@ function renderCourseList(q = '') {
     if (activeFilter === 'CA')        return getCourseState(c) === 'CA';
     if (activeFilter === 'IL')        return getCourseState(c) === 'IL';
     if (activeFilter === 'MA')        return getCourseState(c) === 'MA';
-    if (activeFilter === 'municipal') return c.type === 'municipal';
     if (activeFilter === 'executive') return c.type === 'executive' || c.type === 'par3';
     return false;
   });
@@ -3257,17 +3252,13 @@ function renderCourseList(q = '') {
         const holeCount = (c.holes || []).length || 18;
         const teeYards  = c.tees?.[0]?.yards;
         const yardStr   = teeYards ? teeYards.toLocaleString() + ' yds' : '';
-        const isKV      = c._source === 'community';
-        const badge     = isKV ? '<span class="course-type-badge badge-municipal" style="opacity:0.7">Community<\/span>' : '';
+        const typeBadge = label ? `<span class="course-type-badge ${cls}">${label}<\/span>` : '';
 
         return `<div class="course-item" data-course-id="${c.id}" data-course-source="${c._source || 'builtin'}" onclick="selectCourseByIdx(this)">
           <div style="flex:1;min-width:0">
             <div class="course-name">${c.name}<\/div>
             <div class="course-meta">${c.city} · ${holeCount} holes · Par ${par}${yardStr ? ' · ' + yardStr : ''}<\/div>
-            <div class="course-badges">
-              <span class="course-type-badge ${cls}">${label}<\/span>
-              ${badge}
-            <\/div>
+            ${typeBadge ? `<div class="course-badges">${typeBadge}<\/div>` : ''}
           <\/div>
           <span class="course-arrow">›<\/span>
         <\/div>`;
@@ -6556,7 +6547,7 @@ function filterPrevCourses(q) {
             <div class="pr-course-name">${c.name}<\/div>
             <div class="pr-course-meta">${c.city} · Par ${par}<\/div>
           <\/div>
-          <span class="course-type-badge ${cls}" style="font-size:9px">${label}<\/span>
+          ${label ? `<span class="course-type-badge ${cls}" style="font-size:9px">${label}<\/span>` : ''}
         <\/div>`;
       }).join('');
   }).join('');
@@ -7959,12 +7950,30 @@ try {
     const kvCourses = data.results || [];
     if (kvCourses.length === 0) return;
 
+    // States currently active in the UI — add states here when testers join
+    const ACTIVE_STATES = new Set(['CA', 'IL', 'MA']);
+
+    function courseState(c) {
+      const m = (c.city || '').match(/,\s*([A-Z]{2})$/);
+      return m ? m[1] : '';
+    }
+
     // Only cache courses not already in the built-in COURSES array
+    // and only from active states (skip AZ until an AZ tester rejoins)
     const builtinKeys = new Set(COURSES.map(c => c.name + '|' + c.city));
-    const newCourses  = kvCourses.filter(c => c && !builtinKeys.has(c.name + '|' + c.city));
-    if (newCourses.length === 0) return;
+    const newCourses  = kvCourses.filter(c =>
+      c &&
+      !builtinKeys.has(c.name + '|' + c.city) &&
+      ACTIVE_STATES.has(courseState(c))
+    );
 
     if (!state.customCourses) state.customCourses = [];
+
+    // Purge any AZ courses already in local cache from a previous sync
+    state.customCourses = state.customCourses.filter(c =>
+      ACTIVE_STATES.has(courseState(c))
+    );
+
     newCourses.forEach(course => {
       const idx = state.customCourses.findIndex(c => c.name === course.name && c.city === course.city);
       if (idx >= 0) state.customCourses[idx] = course;
