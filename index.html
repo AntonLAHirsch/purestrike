@@ -149,6 +149,7 @@
 
   /* ---- SCORECARD / HOLE VIEW ---- */
   #screen-round { background: var(--fairway); }
+  .adv-lie-btn { background:rgba(255,255,255,0.06);border:1.5px solid rgba(255,255,255,0.15);color:var(--white);border-radius:12px;padding:14px 10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;text-align:center;width:100%; }
   .hole-header { background: linear-gradient(135deg, var(--rough) 0%, var(--fairway) 100%); padding: 52px 20px 20px; position: sticky; top: 0; z-index: 10; }
   .hole-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
   .hole-nav-btn { background: rgba(255,255,255,0.1); border: none; color: var(--white); width: 40px; height: 40px; border-radius: 50%; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
@@ -836,6 +837,125 @@
   </div>
   <div class="screen-inner" style="padding-top:0">
 
+    <!-- GPS Distance to Green (moved above score) -->
+    <div id="gps-card" style="margin:0 16px 0;display:none">
+      <div style="background:rgba(255,255,255,0.05);border:1.5px solid rgba(255,255,255,0.1);border-radius:16px;padding:14px 16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:18px">📍</span>
+            <span style="font-size:13px;font-weight:600;opacity:0.7">Distance to Green</span>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button id="adv-tracking-btn" onclick="toggleAdvancedTracking()" style="display:none;background:rgba(200,168,75,0.15);border:1px solid rgba(200,168,75,0.4);color:var(--flag);border-radius:8px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Advanced Tracking</button>
+            <button id="gps-mark-btn" onclick="markGreen()" style="display:none;background:rgba(200,168,75,0.15);border:1px solid rgba(200,168,75,0.4);color:var(--flag);border-radius:8px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Mark Green</button>
+          </div>
+        </div>
+        <div id="gps-distance-display" style="text-align:center;padding:4px 0">
+          <div id="gps-yards" style="font-family:'Playfair Display',serif;font-size:52px;font-weight:900;color:var(--flag);line-height:1">—</div>
+          <div id="gps-label" style="font-size:12px;opacity:0.45;margin-top:2px">yards to center</div>
+        </div>
+        <div id="gps-status" style="font-size:11px;opacity:0.4;text-align:center;margin-top:6px"></div>
+      </div>
+    </div>
+
+    <!-- Advanced Tracking Mode UI -->
+    <div id="adv-tracking-panel" style="display:none;margin:0 16px">
+      <div style="background:rgba(200,168,75,0.08);border:1.5px solid rgba(200,168,75,0.3);border-radius:16px;padding:16px">
+
+        <!-- Header -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:16px">🎯</span>
+            <span style="font-size:13px;font-weight:700;color:var(--flag)">Advanced Tracking</span>
+          </div>
+          <button onclick="toggleAdvancedTracking()" style="background:none;border:none;color:rgba(255,255,255,0.35);font-size:18px;cursor:pointer;padding:0 2px">×</button>
+        </div>
+
+        <!-- State: waiting to start -->
+        <div id="adv-state-start">
+          <div style="text-align:center;padding:8px 0 14px">
+            <div style="font-size:12px;opacity:0.5;margin-bottom:16px">Stand at the tee box and tap to begin tracking this hole</div>
+            <button onclick="advStartHole()" style="background:var(--flag);border:none;color:#1a2e1a;border-radius:100px;padding:14px 40px;font-size:15px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;width:100%">
+              Start Hole
+            </button>
+          </div>
+        </div>
+
+        <!-- State: tracking shots -->
+        <div id="adv-state-tracking" style="display:none">
+          <!-- Current shot info -->
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <div>
+              <div style="font-size:11px;opacity:0.45;text-transform:uppercase;letter-spacing:1px">Shot</div>
+              <div id="adv-shot-num" style="font-family:'Playfair Display',serif;font-size:28px;font-weight:900;line-height:1">1</div>
+            </div>
+            <div style="text-align:center">
+              <div style="font-size:11px;opacity:0.45;text-transform:uppercase;letter-spacing:1px">Last Carry</div>
+              <div id="adv-last-carry" style="font-family:'Playfair Display',serif;font-size:28px;font-weight:900;line-height:1;color:var(--flag)">—</div>
+              <div style="font-size:10px;opacity:0.35">yards</div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:11px;opacity:0.45;text-transform:uppercase;letter-spacing:1px">Club</div>
+              <div id="adv-current-club" style="font-size:13px;font-weight:600;max-width:80px;text-align:right">—</div>
+            </div>
+          </div>
+
+          <!-- Club picker -->
+          <div style="margin-bottom:12px">
+            <div style="font-size:11px;opacity:0.45;margin-bottom:6px">Select Club</div>
+            <select id="adv-club-select" class="field-input" style="font-size:13px">
+              <option value="">Choose club…</option>
+            </select>
+          </div>
+
+          <!-- Next shot / finish buttons -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <button id="adv-next-shot-btn" onclick="advNextShot()" style="background:rgba(255,255,255,0.1);border:1.5px solid rgba(255,255,255,0.2);color:var(--white);border-radius:12px;padding:12px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">
+              Next Shot →
+            </button>
+            <button onclick="advFinishHole()" style="background:rgba(200,168,75,0.2);border:1.5px solid rgba(200,168,75,0.4);color:var(--flag);border-radius:12px;padding:12px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">
+              On Green 🏴
+            </button>
+          </div>
+        </div>
+
+        <!-- State: putting -->
+        <div id="adv-state-putting" style="display:none">
+          <div style="text-align:center;padding:4px 0">
+            <div style="font-size:11px;opacity:0.45;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">Putts This Hole</div>
+            <div style="display:flex;align-items:center;justify-content:center;gap:0">
+              <button class="score-minus" onclick="advChangePutts(-1)">−</button>
+              <div id="adv-putt-display" style="font-family:'Playfair Display',serif;font-size:64px;font-weight:900;min-width:100px;text-align:center;line-height:1">2</div>
+              <button class="score-plus" onclick="advChangePutts(1)">+</button>
+            </div>
+            <button onclick="advFinishHole()" style="margin-top:14px;background:var(--flag);border:none;color:#1a2e1a;border-radius:100px;padding:12px 32px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;width:100%">
+              Hole Complete →
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Lie Selection Sheet (hidden, shown after Next Shot) -->
+    <div id="adv-lie-sheet" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:500;background:#1a2e1a;border-top:2px solid rgba(200,168,75,0.3);border-radius:20px 20px 0 0;padding:20px 16px 40px">
+      <div style="text-align:center;margin-bottom:6px">
+        <div style="width:36px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px;margin:0 auto 14px"></div>
+        <div style="font-size:15px;font-weight:700;margin-bottom:4px">Where did it land?</div>
+        <div id="adv-lie-shot-info" style="font-size:12px;opacity:0.45"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px">
+        <button onclick="advSelectLie('Fairway')"    class="adv-lie-btn">🌿 Fairway</button>
+        <button onclick="advSelectLie('Rough')"      class="adv-lie-btn">🌾 Rough</button>
+        <button onclick="advSelectLie('Bunker')"     class="adv-lie-btn">⛱ Bunker</button>
+        <button onclick="advSelectLie('Recovery')"   class="adv-lie-btn">🌲 Recovery</button>
+        <button onclick="advSelectLie('Green')"      class="adv-lie-btn" style="border-color:rgba(200,168,75,0.5);color:var(--flag)">🏴 On Green</button>
+        <button onclick="advSelectLie('Penalty')"    class="adv-lie-btn" style="border-color:rgba(232,112,112,0.5);color:#e87070">⚠️ Penalty</button>
+      </div>
+      <button onclick="document.getElementById('adv-lie-sheet').style.display='none'" style="width:100%;margin-top:12px;background:none;border:none;color:rgba(255,255,255,0.3);font-size:13px;cursor:pointer;padding:8px">Cancel</button>
+    </div>
+    <div id="adv-lie-overlay" style="display:none;position:fixed;inset:0;z-index:499;background:rgba(0,0,0,0.5)" onclick="document.getElementById('adv-lie-sheet').style.display='none';document.getElementById('adv-lie-overlay').style.display='none'"></div>
+
     <!-- Score Input -->
     <div class="score-section">
       <div class="score-label">Total Strokes</div>
@@ -845,24 +965,6 @@
         <button class="score-plus" onclick="changeScore(1)">+</button>
       </div>
       <div class="score-label-rel" id="score-rel-label">Par</div>
-    </div>
-
-    <!-- GPS Distance to Green -->
-    <div id="gps-card" style="margin:0 16px 14px;display:none">
-      <div style="background:rgba(255,255,255,0.05);border:1.5px solid rgba(255,255,255,0.1);border-radius:16px;padding:14px 16px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-          <div style="display:flex;align-items:center;gap:8px">
-            <span style="font-size:18px">📍</span>
-            <span style="font-size:13px;font-weight:600;opacity:0.7">Distance to Green</span>
-          </div>
-          <button id="gps-mark-btn" onclick="markGreen()" style="display:none;background:rgba(200,168,75,0.15);border:1px solid rgba(200,168,75,0.4);color:var(--flag);border-radius:8px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Mark Green</button>
-        </div>
-        <div id="gps-distance-display" style="text-align:center;padding:4px 0">
-          <div id="gps-yards" style="font-family:'Playfair Display',serif;font-size:52px;font-weight:900;color:var(--flag);line-height:1">—</div>
-          <div id="gps-label" style="font-size:12px;opacity:0.45;margin-top:2px">yards to center</div>
-        </div>
-        <div id="gps-status" style="font-size:11px;opacity:0.4;text-align:center;margin-top:6px"></div>
-      </div>
     </div>
 
     <!-- Putts -->
@@ -4665,6 +4767,7 @@ function savePartialRound() {
 function cancelRound() {
   closeModal('end-round-modal');
   stopGPS();
+  advMode = false;
   state.currentRound  = null;
   state.holeData      = [];
   state.currentHole   = 0;
@@ -7405,6 +7508,229 @@ async function adminSaveAllGreens() {
   await adminLoadCourse();
 }
 
+// ===== ADVANCED TRACKING MODE =====
+
+let advMode          = false;  // is advanced tracking active?
+let advShotNum       = 0;      // current shot number this hole
+let advShotPositions = [];     // [{lat,lng,club,carry,lie}] per shot
+let advPutts         = 2;      // putts in putting state
+let advPrevPosition  = null;   // GPS position at last "Next Shot" tap
+let advPendingLie    = null;   // lie selected, waiting to resolve promise
+
+function toggleAdvancedTracking() {
+  if (advMode) {
+    // Exit advanced mode
+    advMode = false;
+    advResetState();
+    document.getElementById('adv-tracking-panel').style.display = 'none';
+    document.getElementById('adv-tracking-btn').textContent      = 'Advanced Tracking';
+    document.getElementById('adv-tracking-btn').style.background = 'rgba(200,168,75,0.15)';
+  } else {
+    advMode = true;
+    advResetState();
+    document.getElementById('adv-tracking-panel').style.display  = 'block';
+    document.getElementById('adv-tracking-btn').textContent       = 'Exit Advanced';
+    document.getElementById('adv-tracking-btn').style.background  = 'rgba(232,112,112,0.15)';
+    document.getElementById('adv-tracking-btn').style.borderColor = 'rgba(232,112,112,0.4)';
+    document.getElementById('adv-tracking-btn').style.color       = '#e87070';
+    advPopulateClubSelect();
+  }
+}
+
+function advResetState() {
+  advShotNum       = 0;
+  advShotPositions = [];
+  advPutts         = 2;
+  advPrevPosition  = null;
+  document.getElementById('adv-state-start').style.display    = 'block';
+  document.getElementById('adv-state-tracking').style.display = 'none';
+  document.getElementById('adv-state-putting').style.display  = 'none';
+  // Disable Next Shot until Start Hole is tapped
+  const nextBtn = document.getElementById('adv-next-shot-btn');
+  if (nextBtn) {
+    nextBtn.disabled         = true;
+    nextBtn.style.opacity    = '0.35';
+    nextBtn.style.cursor     = 'not-allowed';
+    nextBtn.textContent      = 'Next Shot →';
+  }
+}
+
+function advPopulateClubSelect() {
+  const sel   = document.getElementById('adv-club-select');
+  if (!sel) return;
+  const clubs = state.profile?.clubs || [];
+  const types = ['Driver','3-Wood','5-Wood','7-Wood','2-Hybrid','3-Hybrid','4-Hybrid','5-Hybrid','2-Iron','3-Iron','4-Iron','5-Iron','6-Iron','7-Iron','8-Iron','9-Iron','PW','GW','SW','LW'];
+  const options = clubs.length > 0
+    ? clubs.map(c => `<option value="${c.name}">${c.name}<\/option>`).join('')
+    : types.map(t => `<option value="${t}">${t}<\/option>`).join('');
+  sel.innerHTML = '<option value="">Choose club…<\/option>' + options;
+}
+
+function advStartHole() {
+  if (!gpsPosition) {
+    setGpsStatus('Waiting for GPS signal…');
+    setTimeout(advStartHole, 1500);
+    return;
+  }
+  advPrevPosition  = { ...gpsPosition };
+  advShotNum       = 1;
+  advShotPositions = [];
+
+  document.getElementById('adv-state-start').style.display    = 'none';
+  document.getElementById('adv-state-tracking').style.display = 'block';
+  document.getElementById('adv-shot-num').textContent          = advShotNum;
+  document.getElementById('adv-last-carry').textContent        = '—';
+  document.getElementById('adv-current-club').textContent      = '—';
+
+  // Enable Next Shot now that we have a tee position
+  const nextBtn = document.getElementById('adv-next-shot-btn');
+  if (nextBtn) {
+    nextBtn.disabled      = false;
+    nextBtn.style.opacity = '1';
+    nextBtn.style.cursor  = 'pointer';
+  }
+}
+
+async function advNextShot() {
+  const clubSel = document.getElementById('adv-club-select');
+  const club    = clubSel?.value || '';
+
+  // Record current shot position before lie prompt
+  const shotPos = gpsPosition ? { ...gpsPosition } : null;
+
+  // Calculate carry from previous position
+  let carry = null;
+  if (advPrevPosition && shotPos) {
+    carry = haversineYards(advPrevPosition.lat, advPrevPosition.lng, shotPos.lat, shotPos.lng);
+  }
+
+  // Save the shot we just completed
+  advShotPositions.push({
+    shotNum: advShotNum,
+    club,
+    carry,
+    startPos: advPrevPosition ? { ...advPrevPosition } : null,
+    endPos:   shotPos
+  });
+
+  // Show carry for previous shot
+  if (carry !== null) {
+    document.getElementById('adv-last-carry').textContent = carry;
+  }
+
+  // Show lie sheet to categorize where ball landed
+  const lie = await advPromptLie(carry, club);
+
+  if (lie === 'Green') {
+    // Switch to putting mode
+    advShotPositions[advShotPositions.length-1].lie = 'Green';
+    advPutts = 2;
+    document.getElementById('adv-putt-display').textContent     = advPutts;
+    document.getElementById('adv-state-tracking').style.display = 'none';
+    document.getElementById('adv-state-putting').style.display  = 'block';
+    return;
+  }
+
+  // Update prev position and move to next shot
+  advPrevPosition = shotPos;
+  advShotPositions[advShotPositions.length-1].lie = lie;
+  advShotNum++;
+
+  document.getElementById('adv-shot-num').textContent   = advShotNum;
+  document.getElementById('adv-current-club').textContent = club || '—';
+  if (clubSel) clubSel.value = '';
+}
+
+function advPromptLie(carry, club) {
+  return new Promise(resolve => {
+    const sheet   = document.getElementById('adv-lie-sheet');
+    const overlay = document.getElementById('adv-lie-overlay');
+    const info    = document.getElementById('adv-lie-shot-info');
+
+    info.textContent = carry != null
+      ? `Shot ${advShotNum} · ${carry}y carry${club ? ' · ' + club : ''}`
+      : `Shot ${advShotNum}${club ? ' · ' + club : ''}`;
+
+    sheet.style.display   = 'block';
+    overlay.style.display = 'block';
+    advPendingLie = resolve;
+  });
+}
+
+function advSelectLie(lie) {
+  document.getElementById('adv-lie-sheet').style.display   = 'none';
+  document.getElementById('adv-lie-overlay').style.display = 'none';
+  if (advPendingLie) { advPendingLie(lie); advPendingLie = null; }
+}
+
+function advChangePutts(delta) {
+  advPutts = Math.max(0, advPutts + delta);
+  document.getElementById('adv-putt-display').textContent = advPutts;
+}
+
+function advFinishHole() {
+  // Calculate total score: shots + putts
+  const shots      = advShotPositions.length;
+  const totalScore = shots + (advPutts || 0);
+
+  // Build shot data for the shot log
+  const hd = state.holeData[state.currentHole];
+  hd.score  = totalScore;
+  hd.putts  = advPutts;
+
+  // Populate shots into the hole data so strokes gained can use them
+  const course    = state.selectedCourse;
+  const holeYards = course?.holes?.[state.currentHole]?.yards?.[state.currentTeeIdx || 0] || 0;
+  hd.shots = advShotPositions.map((s, i) => ({
+    distToPin: s.startPos && gpsGreenData[String(state.currentHole+1)]
+      ? haversineYards(s.startPos.lat, s.startPos.lng,
+          gpsGreenData[String(state.currentHole+1)].lat,
+          gpsGreenData[String(state.currentHole+1)].lng)
+      : (i === 0 ? holeYards : null),
+    carry:   s.carry || 0,
+    club:    s.club  || '',
+    outcome: s.lie   || '',
+    shape:   'straight'
+  }));
+
+  // Update score display
+  updateScoreDisplay();
+  changePutts(0); // refresh putt display
+
+  saveState();
+
+  // Reset advanced tracking for next hole
+  advResetState();
+  if (advMode) {
+    document.getElementById('adv-state-start').style.display    = 'block';
+    document.getElementById('adv-state-tracking').style.display = 'none';
+    document.getElementById('adv-state-putting').style.display  = 'none';
+  }
+
+  // Auto advance to next hole
+  if (state.currentHole < course.holes.length - 1) {
+    state.currentHole++;
+    if (!state.holeData[state.currentHole].score) {
+      state.holeData[state.currentHole].score = course.holes[state.currentHole].par;
+    }
+    renderHole();
+    onHoleChange();
+    document.getElementById('screen-round').scrollTop = 0;
+  } else {
+    finishRound();
+  }
+}
+
+// Show Advanced Tracking button only when this course has green data
+function updateAdvTrackingBtn() {
+  const btn     = document.getElementById('adv-tracking-btn');
+  if (!btn) return;
+  const holeNum = String(state.currentHole + 1);
+  const hasGreen = gpsGreenData && gpsGreenData[holeNum];
+  const hasCourse = Object.keys(gpsGreenData || {}).length > 0;
+  btn.style.display = hasCourse ? 'block' : 'none';
+}
+
 // ===== GPS DISTANCE ENGINE =====
 // Haversine formula — returns distance in yards between two lat/lng points
 function haversineYards(lat1, lng1, lat2, lng2) {
@@ -7497,6 +7823,7 @@ function showGpsCard() {
 }
 
 function updateGpsDisplay() {
+  updateAdvTrackingBtn();
   const holeNum  = String(state.currentHole + 1);
   const green    = gpsGreenData[holeNum];
   const yardsEl  = document.getElementById('gps-yards');
@@ -7585,6 +7912,11 @@ function onHoleChange() {
   updateGpsDisplay();
   const markBtn = document.getElementById('gps-mark-btn');
   if (markBtn) { markBtn.textContent = 'Mark Green'; markBtn.disabled = false; }
+  // Close lie sheet if open
+  document.getElementById('adv-lie-sheet').style.display   = 'none';
+  document.getElementById('adv-lie-overlay').style.display = 'none';
+  // Reset advanced tracking state for new hole if mode is active
+  if (advMode) advResetState();
 }
 
 // ===== INIT =====
