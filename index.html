@@ -5534,9 +5534,26 @@ async function searchGreenskeeper(inputId, resultsId, context) {
   const timeout = setTimeout(() => controller.abort(), 8000);
 
   try {
-    const res  = await fetch(`${WORKER_URL}/course?q=${encodeURIComponent(query)}`, { signal: controller.signal });
+    const res = await fetch(`${WORKER_URL}/course?q=${encodeURIComponent(query)}`, { signal: controller.signal });
     clearTimeout(timeout);
-    const data = await res.json();
+
+    // Surface non-200 responses clearly instead of hanging
+    if (!res.ok) {
+      showCourseManualEntryPrompt(query, resultsId, context,
+        `Course database returned an error (${res.status}) — enter details manually:`
+      );
+      return;
+    }
+
+    let data;
+    try {
+      data = await res.json();
+    } catch(jsonErr) {
+      showCourseManualEntryPrompt(query, resultsId, context,
+        'Course database returned an unexpected response — enter details manually:'
+      );
+      return;
+    }
 
     if (data.results && data.results.length > 0) {
       // Cache results locally so they appear in the course list immediately
@@ -5557,16 +5574,16 @@ async function searchGreenskeeper(inputId, resultsId, context) {
       const total = data.total || 0;
       showCourseManualEntryPrompt(query, resultsId, context,
         total > 0
-          ? `Not in our database of ${total.toLocaleString()} courses yet — add it below and it'll be saved for everyone:`
+          ? `Not in our database of ${total.toLocaleString()} courses yet — add it below and it\'ll be saved for everyone:`
           : 'Add this course — it will be saved to the shared database for all PureStrike users:'
       );
     }
   } catch(e) {
     clearTimeout(timeout);
-    // Network error or timeout — fall back to manual entry
-    showCourseManualEntryPrompt(query, resultsId, context,
-      'Could not reach course database — enter details manually:'
-    );
+    const msg = e.name === 'AbortError'
+      ? 'Search timed out — check your connection or enter details manually:'
+      : `Could not reach course database (${e.message}) — enter details manually:`;
+    showCourseManualEntryPrompt(query, resultsId, context, msg);
   }
 }
 
