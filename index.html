@@ -5595,9 +5595,7 @@ function selectPrevCourse(id) {
 // Courses added by any user become available to all users instantly.
 
 const WORKER_URL   = 'https://purestrike-api.antonhirsch17.workers.dev';
-// Write key — must match WRITE_KEY secret set in Cloudflare Worker dashboard
-// Generate your own: openssl rand -hex 32
-const WRITE_KEY    = '40605b15c95d45040d3275050c8d09709e7b95f064af73102ed24048c8a07d42';
+// Writes authenticated by Origin header (server-side) — no client key needed
 const GK_CACHE   = {}; // local session cache — avoids repeat network calls
 
 async function searchGreenskeeper(inputId, resultsId, context) {
@@ -5727,7 +5725,7 @@ async function saveManualCourseEntry(resultsId, context) {
     // Push to shared Cloudflare KV
     const res  = await fetch(`${WORKER_URL}/course`, {
       method:  'POST',
-      headers: { 'Content-Type': 'application/json', 'X-PureStrike-Key': WRITE_KEY },
+      headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify(course)
     });
     const data = await res.json();
@@ -6506,7 +6504,7 @@ async function adminSaveAllGreens() {
     try {
       const res  = await fetch(`${WORKER_URL}/greens/${encodeURIComponent(kvId)}/${i}`, {
         method:  'POST',
-        headers: { 'Content-Type': 'application/json', 'X-PureStrike-Key': WRITE_KEY },
+        headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ lat, lng, markedBy: state.profile?.name || 'admin' })
       });
       const data = await res.json();
@@ -6992,7 +6990,7 @@ async function markGreen() {
       `${WORKER_URL}/greens/${encodeURIComponent(courseId)}/${holeNum}`,
       {
         method:  'POST',
-        headers: { 'Content-Type': 'application/json', 'X-PureStrike-Key': WRITE_KEY },
+        headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({
           lat:      gpsPosition.lat,
           lng:      gpsPosition.lng,
