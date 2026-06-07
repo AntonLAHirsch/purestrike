@@ -176,6 +176,12 @@
   .score-display.par { color: var(--white); }
   .score-display.bogey { color: var(--bogey); }
   .score-display.double { color: var(--dbl); }
+  @keyframes hio-pulse {
+    0%   { transform: scale(1);    color: var(--eagle); }
+    30%  { transform: scale(1.25); color: #f0c030; }
+    60%  { transform: scale(0.95); color: #f0c030; }
+    100% { transform: scale(1);    color: var(--eagle); }
+  }
   .score-label-rel { text-align: center; font-size: 14px; font-weight: 600; margin-bottom: 20px; opacity: 0.7; }
 
   /* Quick toggles */
@@ -874,60 +880,90 @@
           <div style="text-align:center;padding:8px 0 14px">
             <div style="font-size:12px;opacity:0.5;margin-bottom:16px">Stand at the tee box and tap to begin tracking this hole</div>
             <button onclick="advStartHole()" style="background:var(--flag);border:none;color:#1a2e1a;border-radius:100px;padding:14px 40px;font-size:15px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;width:100%">
-              Start Hole
+              📍 Start Hole
             </button>
           </div>
         </div>
 
         <!-- State: tracking shots -->
         <div id="adv-state-tracking" style="display:none">
-          <!-- Current shot info -->
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-            <div>
-              <div style="font-size:11px;opacity:0.45;text-transform:uppercase;letter-spacing:1px">Shot</div>
-              <div id="adv-shot-num" style="font-family:'Playfair Display',serif;font-size:28px;font-weight:900;line-height:1">1</div>
+
+          <!-- Shot summary strip -->
+          <div id="adv-shot-summary" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;min-height:28px"></div>
+
+          <!-- Stats row: Shot # / Last Carry -->
+          <div style="display:flex;gap:10px;margin-bottom:14px">
+            <div style="flex:1;background:rgba(255,255,255,0.06);border-radius:10px;padding:10px;text-align:center">
+              <div style="font-size:10px;opacity:0.4;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">Shot</div>
+              <div id="adv-shot-num" style="font-family:'Playfair Display',serif;font-size:32px;font-weight:900;line-height:1">1</div>
             </div>
-            <div style="text-align:center">
-              <div style="font-size:11px;opacity:0.45;text-transform:uppercase;letter-spacing:1px">Last Carry</div>
-              <div id="adv-last-carry" style="font-family:'Playfair Display',serif;font-size:28px;font-weight:900;line-height:1;color:var(--flag)">—</div>
-              <div style="font-size:10px;opacity:0.35">yards</div>
+            <div style="flex:1;background:rgba(255,255,255,0.06);border-radius:10px;padding:10px;text-align:center">
+              <div style="font-size:10px;opacity:0.4;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">Last Carry</div>
+              <div id="adv-last-carry" style="font-family:'Playfair Display',serif;font-size:32px;font-weight:900;line-height:1;color:var(--flag)">—</div>
+              <div style="font-size:10px;opacity:0.3">yards (GPS)</div>
             </div>
-            <div style="text-align:right">
-              <div style="font-size:11px;opacity:0.45;text-transform:uppercase;letter-spacing:1px">Club</div>
-              <div id="adv-current-club" style="font-size:13px;font-weight:600;max-width:80px;text-align:right">—</div>
+            <div style="flex:1;background:rgba(255,255,255,0.06);border-radius:10px;padding:10px;text-align:center">
+              <div style="font-size:10px;opacity:0.4;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">To Green</div>
+              <div id="adv-to-green" style="font-family:'Playfair Display',serif;font-size:32px;font-weight:900;line-height:1;color:rgba(255,255,255,0.7)">—</div>
+              <div style="font-size:10px;opacity:0.3">yards</div>
             </div>
           </div>
 
-          <!-- Club picker -->
+          <!-- Club picker — quick tap grid -->
           <div style="margin-bottom:12px">
-            <div style="font-size:11px;opacity:0.45;margin-bottom:6px">Select Club</div>
-            <select id="adv-club-select" class="field-input" style="font-size:13px">
-              <option value="">Choose club…</option>
-            </select>
+            <div style="font-size:11px;opacity:0.45;margin-bottom:6px">Club for shot <span id="adv-shot-num-label">1</span></div>
+            <div id="adv-club-grid" style="display:flex;flex-wrap:wrap;gap:6px"></div>
           </div>
 
-          <!-- Next shot / finish buttons -->
+          <!-- Manual carry override -->
+          <div style="margin-bottom:12px">
+            <div style="font-size:11px;opacity:0.45;margin-bottom:6px">Manual carry override <span style="opacity:0.5">(optional — use if GPS is off)</span></div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <button onclick="advManualCarryAdj(-5)" style="background:rgba(255,255,255,0.08);border:none;color:var(--white);width:36px;height:36px;border-radius:50%;font-size:18px;cursor:pointer">−</button>
+              <input id="adv-manual-carry" type="number" placeholder="—" min="0" max="400"
+                style="flex:1;background:rgba(255,255,255,0.06);border:1.5px solid rgba(255,255,255,0.1);border-radius:10px;padding:10px;font-size:18px;font-weight:700;color:var(--flag);font-family:'Playfair Display',serif;text-align:center;-moz-appearance:textfield">
+              <button onclick="advManualCarryAdj(5)"  style="background:rgba(255,255,255,0.08);border:none;color:var(--white);width:36px;height:36px;border-radius:50%;font-size:18px;cursor:pointer">+</button>
+              <span style="font-size:12px;opacity:0.4">yds</span>
+            </div>
+          </div>
+
+          <!-- Action buttons -->
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-            <button id="adv-next-shot-btn" onclick="advNextShot()" style="background:rgba(255,255,255,0.1);border:1.5px solid rgba(255,255,255,0.2);color:var(--white);border-radius:12px;padding:12px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">
+            <button id="adv-next-shot-btn" onclick="advNextShot()"
+              style="background:rgba(255,255,255,0.1);border:1.5px solid rgba(255,255,255,0.2);color:var(--white);border-radius:12px;padding:13px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;opacity:0.35;cursor:not-allowed"
+              disabled>
               Next Shot →
             </button>
-            <button onclick="advFinishHole()" style="background:rgba(200,168,75,0.2);border:1.5px solid rgba(200,168,75,0.4);color:var(--flag);border-radius:12px;padding:12px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">
-              On Green 🏴
+            <button onclick="advGoToGreen()"
+              style="background:rgba(200,168,75,0.2);border:1.5px solid rgba(200,168,75,0.4);color:var(--flag);border-radius:12px;padding:13px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">
+              🏴 On Green
             </button>
           </div>
         </div>
 
         <!-- State: putting -->
         <div id="adv-state-putting" style="display:none">
-          <div style="text-align:center;padding:4px 0">
-            <div style="font-size:11px;opacity:0.45;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">Putts This Hole</div>
+          <!-- Shot summary (shows approach shots logged) -->
+          <div id="adv-putt-summary" style="font-size:12px;opacity:0.5;text-align:center;margin-bottom:12px"></div>
+
+          <div style="text-align:center">
+            <div style="font-size:11px;opacity:0.45;margin-bottom:4px;text-transform:uppercase;letter-spacing:1px">Putts This Hole</div>
             <div style="display:flex;align-items:center;justify-content:center;gap:0">
               <button class="score-minus" onclick="advChangePutts(-1)">−</button>
-              <div id="adv-putt-display" style="font-family:'Playfair Display',serif;font-size:64px;font-weight:900;min-width:100px;text-align:center;line-height:1">2</div>
+              <div id="adv-putt-display" style="font-family:'Playfair Display',serif;font-size:72px;font-weight:900;min-width:120px;text-align:center;line-height:1">2</div>
               <button class="score-plus" onclick="advChangePutts(1)">+</button>
             </div>
-            <button onclick="advFinishHole()" style="margin-top:14px;background:var(--flag);border:none;color:#1a2e1a;border-radius:100px;padding:12px 32px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;width:100%">
-              Hole Complete →
+            <div id="adv-putt-score-preview" style="font-size:12px;opacity:0.5;margin-top:4px"></div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px">
+            <button onclick="advBackToShots()"
+              style="background:rgba(255,255,255,0.08);border:1.5px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.6);border-radius:12px;padding:12px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">
+              ← Edit Shots
+            </button>
+            <button onclick="advFinishHole()"
+              style="background:var(--flag);border:none;color:#1a2e1a;border-radius:12px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif">
+              Hole Complete ✓
             </button>
           </div>
         </div>
@@ -935,24 +971,25 @@
       </div>
     </div>
 
-    <!-- Lie Selection Sheet (hidden, shown after Next Shot) -->
+    <!-- Lie Selection Sheet -->
     <div id="adv-lie-sheet" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:500;background:#1a2e1a;border-top:2px solid rgba(200,168,75,0.3);border-radius:20px 20px 0 0;padding:20px 16px 40px">
       <div style="text-align:center;margin-bottom:6px">
         <div style="width:36px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px;margin:0 auto 14px"></div>
         <div style="font-size:15px;font-weight:700;margin-bottom:4px">Where did it land?</div>
-        <div id="adv-lie-shot-info" style="font-size:12px;opacity:0.45"></div>
+        <div id="adv-lie-shot-info" style="font-size:12px;opacity:0.45;margin-bottom:4px"></div>
+        <div id="adv-lie-carry-info" style="font-size:13px;font-weight:700;color:var(--flag)"></div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px">
-        <button onclick="advSelectLie('Fairway')"    class="adv-lie-btn">🌿 Fairway</button>
-        <button onclick="advSelectLie('Rough')"      class="adv-lie-btn">🌾 Rough</button>
-        <button onclick="advSelectLie('Bunker')"     class="adv-lie-btn">⛱ Bunker</button>
-        <button onclick="advSelectLie('Recovery')"   class="adv-lie-btn">🌲 Recovery</button>
-        <button onclick="advSelectLie('Green')"      class="adv-lie-btn" style="border-color:rgba(200,168,75,0.5);color:var(--flag)">🏴 On Green</button>
-        <button onclick="advSelectLie('Penalty')"    class="adv-lie-btn" style="border-color:rgba(232,112,112,0.5);color:#e87070">⚠️ Penalty</button>
+        <button onclick="advSelectLie('Fairway')"   class="adv-lie-btn">🌿 Fairway</button>
+        <button onclick="advSelectLie('Rough')"     class="adv-lie-btn">🌾 Rough</button>
+        <button onclick="advSelectLie('Bunker')"    class="adv-lie-btn">⛱ Bunker</button>
+        <button onclick="advSelectLie('Recovery')"  class="adv-lie-btn">🌲 Recovery</button>
+        <button onclick="advSelectLie('OB')"        class="adv-lie-btn" style="border-color:rgba(232,112,112,0.5);color:#e87070">⚠️ OB / Penalty</button>
+        <button onclick="advSelectLie('Green')"     class="adv-lie-btn" style="border-color:rgba(200,168,75,0.5);color:var(--flag)">🏴 On Green</button>
       </div>
-      <button onclick="document.getElementById('adv-lie-sheet').style.display='none'" style="width:100%;margin-top:12px;background:none;border:none;color:rgba(255,255,255,0.3);font-size:13px;cursor:pointer;padding:8px">Cancel</button>
+      <button onclick="advCancelLie()" style="width:100%;margin-top:12px;background:none;border:none;color:rgba(255,255,255,0.3);font-size:13px;cursor:pointer;padding:8px">Cancel</button>
     </div>
-    <div id="adv-lie-overlay" style="display:none;position:fixed;inset:0;z-index:499;background:rgba(0,0,0,0.5)" onclick="document.getElementById('adv-lie-sheet').style.display='none';document.getElementById('adv-lie-overlay').style.display='none'"></div>
+    <div id="adv-lie-overlay" style="display:none;position:fixed;inset:0;z-index:499;background:rgba(0,0,0,0.5)" onclick="advCancelLie()"></div>
 
     <!-- Score Input -->
     <div class="score-section">
@@ -1196,10 +1233,11 @@
 
 <!-- ===== PROFILE SCREEN ===== -->
 <div class="screen" id="screen-profile">
-  <div class="screen-inner">
+  <div class="screen-inner" style="padding-bottom:100px">
+    <div style="text-align:center;padding:52px 20px 24px">
       <div class="avatar" id="profile-avatar">G</div>
-      <div class="profile-name-display" id="profile-name-display">My Profile</div>
-      <div class="profile-hcp" id="profile-hcp-display">Set your GHIN handicap below</div>
+      <div class="profile-name-display" id="profile-name-display" style="text-align:center">My Profile</div>
+      <div class="profile-hcp" id="profile-hcp-display" style="text-align:center">Set your GHIN handicap below</div>
     </div>
 
     <div class="card">
@@ -1349,7 +1387,7 @@
       </div>
       <!-- Hidden admin access — tap version number 5x to open -->
       <div id="admin-tap-target" onclick="adminTap()" style="text-align:center;margin-top:16px;padding:4px;cursor:default">
-        <span id="admin-version-label" style="font-size:10px;opacity:0.2">v.060226</span>
+        <span id="admin-version-label" style="font-size:10px;opacity:0.2">v.060726</span>
       </div>
       <input type="file" id="import-file-input" accept=".json" style="display:none" onchange="importData(event)">
       <div id="data-status" style="margin-top:10px;font-size:12px;text-align:center;min-height:18px"></div>
@@ -1530,7 +1568,7 @@
   <div class="modal-sheet">
     <div class="modal-handle"></div>
     <div class="flex-between">
-      <div class="modal-title">Add Club to Bag</div>
+      <div class="modal-title" id="club-modal-title">Add Club to Bag</div>
       <button class="modal-close" onclick="closeModal('club-modal')">×</button>
     </div>
 
@@ -1542,10 +1580,12 @@
       <div class="club-step-arrow">›</div>
       <div class="club-step" id="cstep-3">3 Model</div>
       <div class="club-step-arrow">›</div>
-      <div class="club-step" id="cstep-4">4 Distance</div>
+      <div class="club-step" id="cstep-4">4 Select</div>
+      <div class="club-step-arrow">›</div>
+      <div class="club-step" id="cstep-5">5 Distance</div>
     </div>
 
-    <!-- Step 1: Club Type -->
+    <!-- Step 1: Club Category -->
     <div id="club-step-1">
       <div class="field-label" style="margin-bottom:10px">What type of club?</div>
       <div id="club-type-picker" class="toggle-row" style="flex-wrap:wrap"></div>
@@ -1564,28 +1604,18 @@
       <div id="club-model-picker"></div>
     </div>
 
-    <!-- Step 4: Distance -->
+    <!-- Step 4: Which clubs in this category -->
     <div id="club-step-4" style="display:none">
-      <div class="club-summary-card" id="club-summary-card"></div>
-      <div class="field-label" style="margin:16px 0 8px">Average carry distance (yards)</div>
-      <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px">
-        <button class="putt-btn" style="width:48px;height:48px;font-size:24px" onclick="changeClubDist(-5)">−</button>
-        <div style="flex:1;text-align:center">
-          <span style="font-family:'Playfair Display',serif;font-size:48px;font-weight:700;color:var(--flag)" id="club-dist-display">150</span>
-          <span style="font-size:14px;opacity:0.5"> yds</span>
-        </div>
-        <button class="putt-btn" style="width:48px;height:48px;font-size:24px" onclick="changeClubDist(5)">+</button>
-      </div>
-      <div class="toggle-row" style="justify-content:center;margin-bottom:8px">
-        <button class="tog" onclick="setClubDistPreset(80)">80</button>
-        <button class="tog" onclick="setClubDistPreset(100)">100</button>
-        <button class="tog" onclick="setClubDistPreset(120)">120</button>
-        <button class="tog" onclick="setClubDistPreset(150)">150</button>
-        <button class="tog" onclick="setClubDistPreset(175)">175</button>
-        <button class="tog" onclick="setClubDistPreset(200)">200</button>
-        <button class="tog" onclick="setClubDistPreset(230)">230</button>
-        <button class="tog" onclick="setClubDistPreset(260)">260</button>
-      </div>
+      <div class="field-label" style="margin-bottom:6px" id="club-select-label">Which clubs?</div>
+      <div style="font-size:11px;opacity:0.4;margin-bottom:12px">Select all that apply — same brand and model will be assigned to each</div>
+      <div id="club-which-picker" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px"></div>
+    </div>
+
+    <!-- Step 5: Distance per club -->
+    <div id="club-step-5" style="display:none">
+      <div class="field-label" style="margin-bottom:4px">Set average carry distance</div>
+      <div style="font-size:11px;opacity:0.4;margin-bottom:12px">Adjust each club individually — tap a club to edit</div>
+      <div id="club-dist-list"></div>
     </div>
 
     <div style="display:flex;gap:10px;margin-top:16px" id="club-modal-btns">
@@ -2027,11 +2057,11 @@ const MODEL_DESCRIPTIONS = {
 // Active filter
 let activeFilter = 'all';
 
-// Club wizard state
+// Club wizard state — replaced by new multi-club wizard below
 let clubWizardStep = 1;
-let clubWizardData = { type: '', brandId: '', brandName: '', model: '', dist: 150 };
+let clubWizardData = { categoryId:'', brandId:'', brandName:'', model:'', manualBrand:false, manualModel:false, selectedClubs:[], clubDists:{}, _singleClub:'' };
 
-const CLUB_ICONS = { 'Driver':'🏌️','3-Wood':'🌲','5-Wood':'🌲','7-Wood':'🌲','Putter':'🎯','2-Hybrid':'🔀','3-Hybrid':'🔀','4-Hybrid':'🔀','5-Hybrid':'🔀','PW':'🔧','GW':'🔧','SW':'🏖️','LW':'🔧' };
+const CLUB_ICONS = { 'Driver':'🏌️','3-Wood':'🌲','5-Wood':'🌲','7-Wood':'🌲','Putter':'🎯','2-Hybrid':'🔀','3-Hybrid':'🔀','4-Hybrid':'🔀','5-Hybrid':'🔀','PW':'🔧','GW':'🔧','AW':'🔧','SW':'🏖️','LW':'🔧' };
 
 let state = {
   customCourses: [],
@@ -2586,16 +2616,35 @@ function renderHole() {
 }
 
 function updateScoreDisplay() {
-  const h = state.currentHole;
-  const par = state.selectedCourse.holes[h].par;
+  const h     = state.currentHole;
+  const par   = state.selectedCourse.holes[h].par;
   const score = state.holeData[h].score;
-  const rel = score - par;
-  const el = document.getElementById('score-display');
-  el.textContent = score;
-  el.className = 'score-display ' + (rel <= -2 ? 'eagle' : rel === -1 ? 'birdie' : rel === 0 ? 'par' : rel === 1 ? 'bogey' : 'double');
+  const rel   = score - par;
+  const el    = document.getElementById('score-display');
+  const lblEl = document.getElementById('score-rel-label');
 
-  const labels = { '-3': 'Albatross 🦅🦅', '-2': 'Eagle 🦅', '-1': 'Birdie 🐦', '0': 'Par', '1': 'Bogey', '2': 'Double Bogey', '3': 'Triple Bogey' };
-  document.getElementById('score-rel-label').textContent = labels[rel] || (rel > 0 ? '+' + rel : rel);
+  // Hole in One — score of 1 on any par (most common on par 3)
+  const isHIO = score === 1;
+
+  el.textContent = score;
+  el.className   = 'score-display ' + (isHIO ? 'eagle' : rel <= -2 ? 'eagle' : rel === -1 ? 'birdie' : rel === 0 ? 'par' : rel === 1 ? 'bogey' : 'double');
+
+  if (isHIO) {
+    lblEl.innerHTML = '🕳️ Hole in One! 🎉';
+    lblEl.style.color     = '#f0c030';
+    lblEl.style.fontSize  = '18px';
+    lblEl.style.fontWeight = '700';
+    // Trigger confetti burst via a brief animation on the score display
+    el.style.animation = 'none';
+    el.offsetHeight; // force reflow
+    el.style.animation = 'hio-pulse 0.6s ease';
+  } else {
+    lblEl.style.color     = '';
+    lblEl.style.fontSize  = '';
+    lblEl.style.fontWeight = '';
+    const labels = { '-3':'Albatross 🦅🦅', '-2':'Eagle 🦅', '-1':'Birdie 🐦', '0':'Par', '1':'Bogey', '2':'Double Bogey', '3':'Triple Bogey' };
+    lblEl.textContent = labels[String(rel)] || (rel > 0 ? '+' + rel : String(rel));
+  }
 
   updateRunningTotal();
 }
@@ -4638,6 +4687,7 @@ function buildScorecardHTML(round) {
 
   function scoreClass(score, par) {
     if (!score) return '';
+    if (score === 1) return 'color:#f0c030;font-weight:900'; // hole in one
     const diff = score - par;
     if (diff <= -2) return 'color:#f0c030;font-weight:900'; // eagle+
     if (diff === -1) return 'color:#6dd46d;font-weight:700'; // birdie
@@ -4676,7 +4726,8 @@ function buildScorecardHTML(round) {
               const sc  = h.score;
               const par = pars[i];
               const cls = sc ? scoreClass(sc, par) : 'opacity:0.3';
-              return `<td style="${cellStyle};${cls}">${sc || '—'}<\/td>`;
+              const display = sc === 1 ? '🕳️' : (sc || '—');
+              return `<td style="${cellStyle};${cls}" title="${sc === 1 ? 'Hole in One!' : ''}">${display}<\/td>`;
             }).join('')}
             <td style="${cellStyle};font-weight:700">${totalScore || '—'}<\/td>
           <\/tr>
@@ -5022,263 +5073,293 @@ function renderHome() {
   }).join('');
 }
 
-// ===== CLUB WIZARD =====
+// ===== CLUB WIZARD (multi-club flow) =====
+
+const CLUB_CATEGORIES = [
+  { id:'Driver',       label:'Driver',            icon:'🏌️', single:true,  clubs:['Driver'] },
+  { id:'Fairway Wood', label:'Fairway Woods',      icon:'🌲', single:false, clubs:['3-Wood','5-Wood','7-Wood'] },
+  { id:'Hybrid',       label:'Hybrids',            icon:'🔀', single:false, clubs:['2-Hybrid','3-Hybrid','4-Hybrid','5-Hybrid'] },
+  { id:'Iron',         label:'Irons',              icon:'🔩', single:false, clubs:['2-Iron','3-Iron','4-Iron','5-Iron','6-Iron','7-Iron','8-Iron','9-Iron','PW'] },
+  { id:'Wedge',        label:'Short Irons/Wedges', icon:'⛏️', single:false, clubs:['GW','AW','SW','LW'] },
+  { id:'Putter',       label:'Putter',             icon:'🏴', single:true,  noDist:true, clubs:['Putter'] }
+];
+
+const CLUB_DIST_DEFAULTS = {
+  'Driver':260,'3-Wood':235,'5-Wood':220,'7-Wood':205,
+  '2-Hybrid':210,'3-Hybrid':200,'4-Hybrid':190,'5-Hybrid':180,
+  '2-Iron':200,'3-Iron':190,'4-Iron':180,'5-Iron':170,
+  '6-Iron':160,'7-Iron':150,'8-Iron':140,'9-Iron':130,
+  'PW':120,'GW':110,'AW':105,'SW':95,'LW':80,'Putter':0
+};
+
 function openClubModal() {
   clubWizardStep = 1;
-  clubWizardData = { type: '', brandId: '', brandName: '', model: '', dist: 150, manualBrand: false, manualModel: false };
+  clubWizardData = { categoryId:'', brandId:'', brandName:'', model:'',
+    manualBrand:false, manualModel:false, selectedClubs:[], clubDists:{}, _singleClub:'' };
   renderClubWizardStep();
   document.getElementById('club-modal').classList.add('open');
 }
 
+function getCategory() { return CLUB_CATEGORIES.find(c => c.id === clubWizardData.categoryId); }
+
+function getModelTypeKey() {
+  const cat = getCategory();
+  if (!cat) return 'default_iron';
+  const map = { 'Driver':'Driver','Fairway Wood':'3-Wood','Hybrid':'2-Hybrid','Iron':'default_iron','Wedge':'SW','Putter':'Putter' };
+  return map[cat.id] || 'default_iron';
+}
+
+function getTotalSteps() {
+  const cat = getCategory();
+  if (!cat) return 5;
+  if (cat.single) return cat.noDist ? 3 : 4;
+  return 5;
+}
+
 function renderClubWizardStep() {
-  // Update step indicators
-  [1,2,3,4].forEach(n => {
+  const total = getTotalSteps();
+  const cat   = getCategory();
+  const labels = total===3?['Type','Brand','Model']:total===4?['Type','Brand','Model','Distance']:['Type','Brand','Model','Select','Distance'];
+  [1,2,3,4,5].forEach(n => {
     const el = document.getElementById('cstep-'+n);
-    // When manualBrand is set, step 3 is skipped — mark it as done too
-    const isDone = n < clubWizardStep || (clubWizardData.manualBrand && n === 3 && clubWizardStep === 4);
-    el.className = 'club-step' + (n === clubWizardStep ? ' active' : isDone ? ' done' : '');
+    const arrow = el?.nextElementSibling;
+    if (n > total) { el.style.display='none'; if(arrow) arrow.style.display='none'; return; }
+    el.style.display=''; if(arrow) arrow.style.display='';
+    el.textContent = n+' '+(labels[n-1]||'');
+    el.className = 'club-step'+(n===clubWizardStep?' active':n<clubWizardStep?' done':'');
   });
-  // Show/hide step panels — when brand is manual, step 3 is hidden even if clubWizardStep briefly passes through
-  [1,2,3,4].forEach(n => {
-    document.getElementById('club-step-'+n).style.display = n === clubWizardStep ? 'block' : 'none';
+  [1,2,3,4,5].forEach(n => {
+    const el = document.getElementById('club-step-'+n);
+    if (el) el.style.display = n===clubWizardStep?'block':'none';
   });
-  document.getElementById('club-back-btn').style.display = clubWizardStep > 1 ? 'flex' : 'none';
-  const nextBtn = document.getElementById('club-next-btn');
-  nextBtn.textContent = clubWizardStep === 4 ? '✓ Add to Bag' : 'Next →';
-
-  if (clubWizardStep === 1) renderClubTypePicker();
-  if (clubWizardStep === 2) renderBrandPicker();
-  if (clubWizardStep === 3) renderModelPicker();
-  if (clubWizardStep === 4) renderDistanceStep();
+  document.getElementById('club-back-btn').style.display = clubWizardStep>1?'flex':'none';
+  const isLast = clubWizardStep === total;
+  document.getElementById('club-next-btn').textContent = isLast ? '✓ Add to Bag' : 'Next →';
+  if (clubWizardStep===1) renderClubCategoryPicker();
+  if (clubWizardStep===2) renderBrandPicker();
+  if (clubWizardStep===3) renderModelPicker();
+  if (clubWizardStep===4 && !cat?.single) renderWhichClubsPicker();
+  if (clubWizardStep===4 && cat?.single && !cat?.noDist) renderSingleDistStep();
+  if (clubWizardStep===5) renderMultiDistStep();
 }
 
-function renderClubTypePicker() {
+function renderClubCategoryPicker() {
   const el = document.getElementById('club-type-picker');
-  el.innerHTML = CLUB_TYPES.map(t => `
-    <button class="tog ${clubWizardData.type === t ? 'on' : ''}" onclick="selectClubType('${t}')">${t}<\/button>
-  `).join('');
+  el.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:10px';
+  el.innerHTML = CLUB_CATEGORIES.map(cat => {
+    const sel = clubWizardData.categoryId===cat.id;
+    return `<button onclick="selectClubCategory('${cat.id}')"
+      style="background:${sel?'rgba(200,168,75,0.2)':'rgba(255,255,255,0.05)'};
+      border:1.5px solid ${sel?'var(--flag)':'rgba(255,255,255,0.1)'};border-radius:12px;
+      padding:14px 10px;cursor:pointer;text-align:center;font-family:'DM Sans',sans-serif;
+      color:${sel?'var(--flag)':'var(--white)'};font-weight:${sel?700:400};font-size:13px">
+      <div style="font-size:24px;margin-bottom:4px">${cat.icon}<\/div>${cat.label}
+    <\/button>`;
+  }).join('');
 }
 
-function selectClubType(type) {
-  clubWizardData.type = type;
-  document.querySelectorAll('#club-type-picker .tog').forEach(b => b.classList.toggle('on', b.textContent === type));
+function selectClubCategory(id) {
+  clubWizardData.categoryId=id; clubWizardData.selectedClubs=[]; clubWizardData.clubDists={};
+  renderClubCategoryPicker();
 }
 
 function renderBrandPicker() {
   const el = document.getElementById('club-brand-picker');
-
-  // Manual brand entry mode
   if (clubWizardData.manualBrand) {
     el.innerHTML = `
       <div style="background:rgba(200,168,75,0.1);border:1px solid rgba(200,168,75,0.3);border-radius:12px;padding:14px;margin-bottom:10px">
         <div style="font-size:12px;opacity:0.6;margin-bottom:10px">Enter brand and model manually:<\/div>
-        <div class="form-field" style="margin-bottom:8px">
-          <label class="field-label">Brand Name<\/label>
-          <input class="field-input" id="manual-brand-input" placeholder="e.g. Mizuno, Ben Hogan, Cobra" value="${clubWizardData.brandName||''}">
-        <\/div>
-        <div class="form-field" style="margin-bottom:0">
-          <label class="field-label">Model Name<\/label>
-          <input class="field-input" id="manual-model-input" placeholder="e.g. JPX 923 Forged" value="${clubWizardData.model||''}">
-        <\/div>
+        <div class="form-field" style="margin-bottom:8px"><label class="field-label">Brand Name<\/label>
+          <input class="field-input" id="manual-brand-input" placeholder="e.g. Mizuno, Ben Hogan" value="${clubWizardData.brandName||''}"><\/div>
+        <div class="form-field" style="margin-bottom:0"><label class="field-label">Model Name<\/label>
+          <input class="field-input" id="manual-model-input" placeholder="e.g. JPX 923 Forged" value="${clubWizardData.model||''}"><\/div>
       <\/div>
       <button onclick="cancelManualBrand()" style="width:100%;background:none;border:none;color:rgba(255,255,255,0.35);font-size:12px;cursor:pointer;padding:6px;text-decoration:underline;text-underline-offset:3px">← Back to brand list<\/button>`;
     return;
   }
-
   el.innerHTML = MANUFACTURERS.map(m => `
-    <div class="brand-card ${clubWizardData.brandId === m.id ? 'selected' : ''}" onclick="selectBrand('${m.id}','${m.name}')">
+    <div class="brand-card ${clubWizardData.brandId===m.id?'selected':''}" onclick="selectBrand('${m.id}','${m.name}')">
       <div class="brand-logo" style="background:${m.color};color:${m.textColor}">${m.abbr}<\/div>
-      <div>
-        <div class="brand-name">${m.name}<\/div>
-        <div class="brand-tagline">${m.tagline}<\/div>
-      <\/div>
-      ${clubWizardData.brandId === m.id ? '<span style="color:var(--flag);font-size:20px">✓<\/span>' : ''}
-    <\/div>
-  `).join('') + `
-  <div class="gk-divider" style="margin:14px 0 10px"><span>Brand not listed?<\/span><\/div>
-  <button onclick="enterManualBrand()" style="width:100%;background:rgba(255,255,255,0.05);border:1.5px dashed rgba(255,255,255,0.2);border-radius:12px;color:rgba(255,255,255,0.55);font-family:'DM Sans',sans-serif;font-size:13px;padding:12px;cursor:pointer">+ Enter brand & model manually<\/button>`;
+      <div><div class="brand-name">${m.name}<\/div><div class="brand-tagline">${m.tagline}<\/div><\/div>
+      ${clubWizardData.brandId===m.id?'<span style="color:var(--flag);font-size:20px">✓<\/span>':''}
+    <\/div>`).join('') +
+    `<div class="gk-divider" style="margin:14px 0 10px"><span>Brand not listed?<\/span><\/div>
+     <button onclick="enterManualBrand()" style="width:100%;background:rgba(255,255,255,0.05);border:1.5px dashed rgba(255,255,255,0.2);border-radius:12px;color:rgba(255,255,255,0.55);font-family:'DM Sans',sans-serif;font-size:13px;padding:12px;cursor:pointer">+ Enter brand & model manually<\/button>`;
 }
 
-function selectBrand(id, name) {
-  clubWizardData.brandId = id;
-  clubWizardData.brandName = name;
-  clubWizardData.model = ''; // reset model when brand changes
-  renderBrandPicker();
-}
-
-function getModelsForType(brandId, type) {
-  const mfr = MANUFACTURERS.find(m => m.id === brandId);
-  if (!mfr) return [];
-  const ironTypes = ['2-Iron','3-Iron','4-Iron','5-Iron','6-Iron','7-Iron','8-Iron','9-Iron'];
-  if (ironTypes.includes(type)) return mfr.models['default_iron'] || [];
-  return mfr.models[type] || mfr.models['default_iron'] || [];
-}
+function selectBrand(id,name) { clubWizardData.brandId=id; clubWizardData.brandName=name; clubWizardData.model=''; renderBrandPicker(); }
 
 function renderModelPicker() {
   const el  = document.getElementById('club-model-picker');
   const sub = document.getElementById('club-model-subtitle');
-  sub.textContent = (clubWizardData.brandName || 'Custom') + ' · ' + clubWizardData.type;
-
-  const models = getModelsForType(clubWizardData.brandId, clubWizardData.type);
-
-  // Manual model entry mode, or no models available
-  if (clubWizardData.manualModel || models.length === 0) {
+  const cat = getCategory();
+  sub.textContent = (clubWizardData.brandName||'Custom')+' · '+(cat?.label||'');
+  const mfr    = MANUFACTURERS.find(m => m.id===clubWizardData.brandId);
+  const models = mfr ? (mfr.models[getModelTypeKey()] || mfr.models['default_iron'] || []) : [];
+  if (clubWizardData.manualModel || models.length===0) {
     el.innerHTML = `
       <div style="background:rgba(200,168,75,0.1);border:1px solid rgba(200,168,75,0.3);border-radius:12px;padding:14px;margin-bottom:10px">
         <div style="font-size:12px;opacity:0.6;margin-bottom:8px">Enter the model name:<\/div>
-        <input class="field-input" id="manual-model-only-input" placeholder="e.g. i525, Apex Pro, ST-Z 230" value="${clubWizardData.model||''}">
+        <input class="field-input" id="manual-model-only-input" placeholder="e.g. i525, Apex Pro" value="${clubWizardData.model||''}">
       <\/div>
-      ${models.length > 0 ? `<button onclick="cancelManualModel()" style="width:100%;background:none;border:none;color:rgba(255,255,255,0.35);font-size:12px;cursor:pointer;padding:6px;text-decoration:underline;text-underline-offset:3px">← Back to model list<\/button>` : ''}`;
+      ${models.length>0?`<button onclick="cancelManualModel()" style="width:100%;background:none;border:none;color:rgba(255,255,255,0.35);font-size:12px;cursor:pointer;padding:6px;text-decoration:underline;text-underline-offset:3px">← Back to model list<\/button>`:''}`;
     return;
   }
+  el.innerHTML = models.map(m => `
+    <div class="model-card ${clubWizardData.model===m?'selected':''}" onclick="selectModel('${m.replace(/'/g,"\'")}')">
+      <div><div class="model-name">${m}<\/div>${MODEL_DESCRIPTIONS[m]?`<div class="model-desc">${MODEL_DESCRIPTIONS[m]}<\/div>`:''}<\/div>
+      <div class="model-check">${clubWizardData.model===m?'✓':''}<\/div>
+    <\/div>`).join('') +
+    `<div class="gk-divider" style="margin:14px 0 10px"><span>Model not listed?<\/span><\/div>
+     <button onclick="enterManualModel()" style="width:100%;background:rgba(255,255,255,0.05);border:1.5px dashed rgba(255,255,255,0.2);border-radius:12px;color:rgba(255,255,255,0.55);font-family:'DM Sans',sans-serif;font-size:13px;padding:12px;cursor:pointer">+ Enter model manually<\/button>`;
+}
 
-  el.innerHTML = models.map(m => {
-    const desc = MODEL_DESCRIPTIONS[m] || '';
-    return `<div class="model-card ${clubWizardData.model === m ? 'selected' : ''}" onclick="selectModel('${m.replace(/'/g,"\\'")}')">
-      <div>
-        <div class="model-name">${m}<\/div>
-        ${desc ? `<div class="model-desc">${desc}<\/div>` : ''}
+function selectModel(m) { clubWizardData.model=m; renderModelPicker(); }
+
+function renderWhichClubsPicker() {
+  const cat = getCategory(); if (!cat) return;
+  document.getElementById('club-select-label').textContent = 'Which '+cat.label+'?';
+  const el = document.getElementById('club-which-picker');
+  el.innerHTML = cat.clubs.map(club => {
+    const sel = clubWizardData.selectedClubs.includes(club);
+    return `<button onclick="toggleClubSelection('${club}')"
+      style="background:${sel?'rgba(200,168,75,0.2)':'rgba(255,255,255,0.05)'};
+      border:1.5px solid ${sel?'var(--flag)':'rgba(255,255,255,0.12)'};border-radius:10px;
+      padding:12px 6px;cursor:pointer;text-align:center;font-family:'DM Sans',sans-serif;
+      color:${sel?'var(--flag)':'var(--white)'};font-size:13px;font-weight:${sel?700:400}">
+      ${sel?'✓ ':''}${club}<\/button>`;
+  }).join('');
+}
+
+function toggleClubSelection(club) {
+  const idx = clubWizardData.selectedClubs.indexOf(club);
+  if (idx>=0) clubWizardData.selectedClubs.splice(idx,1); else clubWizardData.selectedClubs.push(club);
+  const cat = getCategory();
+  clubWizardData.selectedClubs.sort((a,b) => cat.clubs.indexOf(a)-cat.clubs.indexOf(b));
+  renderWhichClubsPicker();
+}
+
+function renderSingleDistStep() {
+  const club = getCategory()?.clubs[0] || 'Driver';
+  clubWizardData._singleClub = club;
+  if (!clubWizardData.clubDists[club]) clubWizardData.clubDists[club] = CLUB_DIST_DEFAULTS[club]||150;
+  const dist = clubWizardData.clubDists[club];
+  document.getElementById('club-dist-list').innerHTML = `
+    <div style="background:rgba(255,255,255,0.05);border-radius:14px;padding:16px;text-align:center">
+      <div style="font-size:13px;font-weight:600;margin-bottom:12px">${clubWizardData.brandName} ${clubWizardData.model} · ${club}<\/div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:12px">
+        <button class="putt-btn" style="width:48px;height:48px;font-size:24px" onclick="adjustSingleDist(-5)">−<\/button>
+        <div><span style="font-family:'Playfair Display',serif;font-size:52px;font-weight:900;color:var(--flag)" id="single-dist-val">${dist}<\/span><span style="font-size:14px;opacity:0.5"> yds<\/span><\/div>
+        <button class="putt-btn" style="width:48px;height:48px;font-size:24px" onclick="adjustSingleDist(5)">+<\/button>
       <\/div>
-      <div class="model-check">${clubWizardData.model === m ? '✓' : ''}<\/div>
+      <div class="toggle-row" style="justify-content:center;flex-wrap:wrap;gap:6px">
+        ${[80,100,120,150,175,200,230,260,290].map(v=>`<button class="tog" onclick="setSingleDist(${v})">${v}<\/button>`).join('')}
+      <\/div>
     <\/div>`;
-  }).join('') + `
-  <div class="gk-divider" style="margin:14px 0 10px"><span>Model not listed?<\/span><\/div>
-  <button onclick="enterManualModel()" style="width:100%;background:rgba(255,255,255,0.05);border:1.5px dashed rgba(255,255,255,0.2);border-radius:12px;color:rgba(255,255,255,0.55);font-family:'DM Sans',sans-serif;font-size:13px;padding:12px;cursor:pointer">+ Enter model manually<\/button>`;
 }
 
-function selectModel(model) {
-  clubWizardData.model = model;
-  renderModelPicker();
+function adjustSingleDist(d) {
+  const c = clubWizardData._singleClub;
+  clubWizardData.clubDists[c] = Math.max(0,Math.min(350,(clubWizardData.clubDists[c]||150)+d));
+  document.getElementById('single-dist-val').textContent = clubWizardData.clubDists[c];
+}
+function setSingleDist(v) { clubWizardData.clubDists[clubWizardData._singleClub]=v; document.getElementById('single-dist-val').textContent=v; }
+
+function renderMultiDistStep() {
+  const clubs = clubWizardData.selectedClubs;
+  clubs.forEach(c => { if (!clubWizardData.clubDists[c]) clubWizardData.clubDists[c]=CLUB_DIST_DEFAULTS[c]||130; });
+  document.getElementById('club-dist-list').innerHTML = clubs.map(club => {
+    const id = 'mdist-'+club.replace(/[^a-zA-Z0-9]/g,'-');
+    return `<div style="background:rgba(255,255,255,0.05);border-radius:12px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px">
+      <div style="flex:1;font-size:14px;font-weight:600">${club}<\/div>
+      <button onclick="adjustMultiDist('${club}',-5)" style="background:rgba(255,255,255,0.1);border:none;color:var(--white);width:36px;height:36px;border-radius:50%;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center">−<\/button>
+      <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--flag);min-width:48px;text-align:center" id="${id}">${clubWizardData.clubDists[club]}<\/div>
+      <button onclick="adjustMultiDist('${club}',5)" style="background:rgba(255,255,255,0.1);border:none;color:var(--white);width:36px;height:36px;border-radius:50%;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center">+<\/button>
+      <span style="font-size:11px;opacity:0.4">yds<\/span>
+    <\/div>`;
+  }).join('');
 }
 
-function renderDistanceStep() {
-  // Suggest default distance based on club type
-  const defaults = {
-    'Driver':260,'3-Wood':235,'5-Wood':220,'7-Wood':205,'2-Hybrid':210,'3-Hybrid':200,
-    '4-Hybrid':190,'5-Hybrid':180,'2-Iron':200,'3-Iron':190,'4-Iron':180,'5-Iron':170,
-    '6-Iron':160,'7-Iron':150,'8-Iron':140,'9-Iron':130,'PW':120,'GW':110,'SW':95,'LW':80,'Putter':0
-  };
-  if (!clubWizardData.dist || clubWizardData.dist === 150) {
-    clubWizardData.dist = defaults[clubWizardData.type] || 150;
-  }
-  document.getElementById('club-dist-display').textContent = clubWizardData.dist;
-
-  const icon = CLUB_ICONS[clubWizardData.type] || '⛳';
-  document.getElementById('club-summary-card').innerHTML = `
-    <div class="club-summary-icon">${icon}<\/div>
-    <div>
-      <div class="club-summary-name">${clubWizardData.brandName} ${clubWizardData.model}<\/div>
-      <div class="club-summary-sub">${clubWizardData.type}<\/div>
-    <\/div>
-  `;
+function adjustMultiDist(club,d) {
+  clubWizardData.clubDists[club] = Math.max(0,Math.min(350,(clubWizardData.clubDists[club]||130)+d));
+  const el = document.getElementById('mdist-'+club.replace(/[^a-zA-Z0-9]/g,'-'));
+  if (el) el.textContent = clubWizardData.clubDists[club];
 }
 
-function changeClubDist(d) {
-  clubWizardData.dist = Math.max(0, Math.min(350, clubWizardData.dist + d));
-  document.getElementById('club-dist-display').textContent = clubWizardData.dist;
-}
-
-function setClubDistPreset(v) {
-  clubWizardData.dist = v;
-  document.getElementById('club-dist-display').textContent = v;
-}
-
-// Manual brand entry
-function enterManualBrand() {
-  clubWizardData.manualBrand = true;
-  clubWizardData.brandId = 'manual';
-  clubWizardData.brandName = '';
-  clubWizardData.model = '';
-  clubWizardData.manualModel = true; // brand manual always means model manual too
-  renderBrandPicker();
-}
-function cancelManualBrand() {
-  clubWizardData.manualBrand = false;
-  clubWizardData.manualModel = false;
-  clubWizardData.brandId = '';
-  clubWizardData.brandName = '';
-  clubWizardData.model = '';
-  renderBrandPicker();
-}
-
-// Manual model entry (brand was found, model wasn't)
-function enterManualModel() {
-  clubWizardData.manualModel = true;
-  clubWizardData.model = '';
-  renderModelPicker();
-}
-function cancelManualModel() {
-  clubWizardData.manualModel = false;
-  clubWizardData.model = '';
-  renderModelPicker();
-}
+function enterManualBrand() { clubWizardData.manualBrand=true; clubWizardData.brandId='manual'; clubWizardData.brandName=''; clubWizardData.model=''; clubWizardData.manualModel=true; renderBrandPicker(); }
+function cancelManualBrand() { clubWizardData.manualBrand=false; clubWizardData.manualModel=false; clubWizardData.brandId=''; clubWizardData.brandName=''; clubWizardData.model=''; renderBrandPicker(); }
+function enterManualModel() { clubWizardData.manualModel=true; clubWizardData.model=''; renderModelPicker(); }
+function cancelManualModel() { clubWizardData.manualModel=false; clubWizardData.model=''; renderModelPicker(); }
 
 function clubStepNext() {
-  if (clubWizardStep === 1) {
-    if (!clubWizardData.type) { showWizardError('Please select a club type'); return; }
-    clubWizardStep = 2;
-  } else if (clubWizardStep === 2) {
+  const cat   = getCategory();
+  const total = getTotalSteps();
+  if (clubWizardStep===1) {
+    if (!clubWizardData.categoryId) { showWizardError('Please select a club type'); return; }
+    clubWizardStep=2;
+  } else if (clubWizardStep===2) {
     if (clubWizardData.manualBrand) {
-      // Read manual brand + model inputs
-      const brandVal = document.getElementById('manual-brand-input')?.value?.trim();
-      const modelVal = document.getElementById('manual-model-input')?.value?.trim();
-      if (!brandVal) { showWizardError('Please enter a brand name'); return; }
-      clubWizardData.brandName = brandVal;
-      clubWizardData.model     = modelVal || '';
-      // Skip model step — go straight to distance
-      clubWizardStep = 4;
+      const b = document.getElementById('manual-brand-input')?.value?.trim();
+      const m = document.getElementById('manual-model-input')?.value?.trim();
+      if (!b) { showWizardError('Please enter a brand name'); return; }
+      clubWizardData.brandName=b; clubWizardData.model=m||'';
+      clubWizardStep = cat?.single ? total : (total===5?4:total);
     } else {
       if (!clubWizardData.brandId) { showWizardError('Please select a brand'); return; }
-      clubWizardStep = 3;
+      clubWizardStep=3;
     }
-  } else if (clubWizardStep === 3) {
+  } else if (clubWizardStep===3) {
     if (clubWizardData.manualModel) {
-      const modelVal = document.getElementById('manual-model-only-input')?.value?.trim();
-      if (!modelVal) { showWizardError('Please enter a model name'); return; }
-      clubWizardData.model = modelVal;
+      const m = document.getElementById('manual-model-only-input')?.value?.trim();
+      if (!m) { showWizardError('Please enter a model name'); return; }
+      clubWizardData.model=m;
     } else {
       if (!clubWizardData.model) { showWizardError('Please select a model'); return; }
     }
-    clubWizardStep = 4;
-  } else if (clubWizardStep === 4) {
-    addClub();
-    return;
+    clubWizardStep = cat?.single ? total : 4;
+  } else if (clubWizardStep===4) {
+    if (!cat?.single) {
+      if (clubWizardData.selectedClubs.length===0) { showWizardError('Please select at least one club'); return; }
+      clubWizardStep=5;
+    } else { addClubsFromWizard(); return; }
+  } else if (clubWizardStep===5) {
+    addClubsFromWizard(); return;
   }
   renderClubWizardStep();
 }
 
 function clubStepBack() {
-  if (clubWizardStep > 1) {
-    // If we're at step 4 and manual brand was used, go back to step 2 (step 3 was skipped)
-    if (clubWizardStep === 4 && clubWizardData.manualBrand) {
-      clubWizardStep = 2;
-    } else {
-      clubWizardStep--;
-    }
-    renderClubWizardStep();
-  }
+  const cat = getCategory();
+  if      (clubWizardStep===2) clubWizardStep=1;
+  else if (clubWizardStep===3) clubWizardStep=2;
+  else if (clubWizardStep===4) clubWizardStep = (cat?.single||clubWizardData.manualBrand)?2:3;
+  else if (clubWizardStep===5) clubWizardStep=4;
+  renderClubWizardStep();
 }
 
-function showWizardError(msg) {
-  const btn = document.getElementById('club-next-btn');
-  const orig = btn.textContent;
-  btn.textContent = '⚠ ' + msg;
-  btn.style.background = 'var(--danger)';
-  setTimeout(() => { btn.textContent = orig; btn.style.background = ''; }, 1800);
-}
-
-function addClub() {
-  if (!state.profile.clubs) state.profile.clubs = [];
-  state.profile.clubs.push({
-    type: clubWizardData.type,
-    brand: clubWizardData.brandName,
-    model: clubWizardData.model,
-    dist: clubWizardData.dist
+function addClubsFromWizard() {
+  if (!state.profile.clubs) state.profile.clubs=[];
+  const cat = getCategory();
+  const ORDER = ['Driver','3-Wood','5-Wood','7-Wood','2-Hybrid','3-Hybrid','4-Hybrid','5-Hybrid',
+                 '2-Iron','3-Iron','4-Iron','5-Iron','6-Iron','7-Iron','8-Iron','9-Iron',
+                 'PW','GW','AW','SW','LW','Putter'];
+  const clubsToAdd = cat?.single
+    ? [{ type:cat.clubs[0], brand:clubWizardData.brandName, model:clubWizardData.model, dist:clubWizardData.clubDists[cat.clubs[0]]||0 }]
+    : clubWizardData.selectedClubs.map(club => ({ type:club, brand:clubWizardData.brandName, model:clubWizardData.model, dist:clubWizardData.clubDists[club]||CLUB_DIST_DEFAULTS[club]||0 }));
+  clubsToAdd.forEach(club => {
+    const idx = state.profile.clubs.findIndex(c => c.type===club.type);
+    if (idx>=0) state.profile.clubs[idx]=club; else state.profile.clubs.push(club);
   });
-  saveState();
-  closeModal('club-modal');
-  renderClubList();
+  state.profile.clubs.sort((a,b) => { const ai=ORDER.indexOf(a.type),bi=ORDER.indexOf(b.type); return (ai===-1?99:ai)-(bi===-1?99:bi); });
+  saveState(); closeModal('club-modal'); renderClubList();
 }
+
+// Legacy aliases
+function addClub() { addClubsFromWizard(); }
+function selectClubType(type) { clubWizardData.categoryId=type; renderClubCategoryPicker(); }
+function changeClubDist(d) { adjustSingleDist(d); }
+function setClubDistPreset(v) { setSingleDist(v); }
+
 
 function removeClub(i) {
   state.profile.clubs.splice(i, 1);
@@ -5513,7 +5594,10 @@ function selectPrevCourse(id) {
 // All users share a community course database via the PureStrike Worker.
 // Courses added by any user become available to all users instantly.
 
-const WORKER_URL = 'https://purestrike-api.antonhirsch17.workers.dev';
+const WORKER_URL   = 'https://purestrike-api.antonhirsch17.workers.dev';
+// Write key — must match WRITE_KEY secret set in Cloudflare Worker dashboard
+// Generate your own: openssl rand -hex 32
+const WRITE_KEY    = 'REPLACE_WITH_YOUR_SECRET_KEY';
 const GK_CACHE   = {}; // local session cache — avoids repeat network calls
 
 async function searchGreenskeeper(inputId, resultsId, context) {
@@ -5534,26 +5618,9 @@ async function searchGreenskeeper(inputId, resultsId, context) {
   const timeout = setTimeout(() => controller.abort(), 8000);
 
   try {
-    const res = await fetch(`${WORKER_URL}/course?q=${encodeURIComponent(query)}`, { signal: controller.signal });
+    const res  = await fetch(`${WORKER_URL}/course?q=${encodeURIComponent(query)}`, { signal: controller.signal });
     clearTimeout(timeout);
-
-    // Surface non-200 responses clearly instead of hanging
-    if (!res.ok) {
-      showCourseManualEntryPrompt(query, resultsId, context,
-        `Course database returned an error (${res.status}) — enter details manually:`
-      );
-      return;
-    }
-
-    let data;
-    try {
-      data = await res.json();
-    } catch(jsonErr) {
-      showCourseManualEntryPrompt(query, resultsId, context,
-        'Course database returned an unexpected response — enter details manually:'
-      );
-      return;
-    }
+    const data = await res.json();
 
     if (data.results && data.results.length > 0) {
       // Cache results locally so they appear in the course list immediately
@@ -5574,16 +5641,16 @@ async function searchGreenskeeper(inputId, resultsId, context) {
       const total = data.total || 0;
       showCourseManualEntryPrompt(query, resultsId, context,
         total > 0
-          ? `Not in our database of ${total.toLocaleString()} courses yet — add it below and it\'ll be saved for everyone:`
+          ? `Not in our database of ${total.toLocaleString()} courses yet — add it below and it'll be saved for everyone:`
           : 'Add this course — it will be saved to the shared database for all PureStrike users:'
       );
     }
   } catch(e) {
     clearTimeout(timeout);
-    const msg = e.name === 'AbortError'
-      ? 'Search timed out — check your connection or enter details manually:'
-      : `Could not reach course database (${e.message}) — enter details manually:`;
-    showCourseManualEntryPrompt(query, resultsId, context, msg);
+    // Network error or timeout — fall back to manual entry
+    showCourseManualEntryPrompt(query, resultsId, context,
+      'Could not reach course database — enter details manually:'
+    );
   }
 }
 
@@ -5626,119 +5693,6 @@ function confirmSharedCourse(courseIdx, resultsId, teeIdx, context) {
   applyCourseToContext(course, parseInt(teeIdx), context);
 }
 
-// ── AI COURSE LOOKUP ─────────────────────────────────────────────
-// Shared with PurePlay. Calls Claude Haiku to return real hole pars
-// and stroke indexes for any course it knows. Falls back gracefully.
-
-async function lookupCourseAI(name, city) {
-  const prompt = `You are a golf course database. Return ONLY a valid JSON object (no markdown, no explanation) for the golf course named "${name}"${city ? ' in ' + city : ''}.
-
-JSON structure:
-{
-  "name": "Full official course name",
-  "city": "City, ST",
-  "state": "ST",
-  "holes": [
-    { "hole": 1, "par": 4, "hcp": 7 },
-    ... all 18 holes ...
-  ],
-  "tees": [
-    { "name": "Black", "color": "#222222", "yards": 7200, "rating": 74.5, "slope": 138 },
-    { "name": "Blue",  "color": "#3366cc", "yards": 6700, "rating": 72.1, "slope": 132 },
-    { "name": "White", "color": "#ffffff", "yards": 6200, "rating": 69.8, "slope": 125 },
-    { "name": "Red",   "color": "#cc3333", "yards": 5600, "rating": 71.2, "slope": 120 }
-  ]
-}
-
-Rules:
-- holes must have all 18 entries (or 9 for a 9-hole course)
-- hcp is the REAL stroke index for that hole (1=hardest, 18=easiest)
-- Include all real tee sets with accurate yardage, rating, slope
-- Use only these tee colors: #222222 (Black), #3366cc (Blue), #ffffff (White), #cc3333 (Red), #c8a84b (Gold), #4a9a4a (Green)
-- If you do NOT know this specific course, return exactly: {"unknown":true}
-- Return ONLY the JSON`;
-
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 1200,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-    const data = await res.json();
-    const text = (data.content?.[0]?.text || '').trim().replace(/```json|```/g, '').trim();
-    const json = JSON.parse(text);
-    if (json.unknown || !json.holes || json.holes.length < 9) return null;
-    return json;
-  } catch(e) {
-    console.warn('AI course lookup failed:', e);
-    return null;
-  }
-}
-
-// Renders the manual entry form with an AI lookup button injected at the top.
-// Called when a course search returns no results or user clicks "Course not listed".
-function showCourseManualEntryPrompt(prefillName, resultsId, context, message) {
-  const el = document.getElementById(resultsId);
-  if (!el) return;
-  el.innerHTML = `
-    <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">${message || 'Add this course:'}</div>
-    <div id="ps-ai-result-${resultsId}" style="display:none;margin-bottom:12px;"></div>
-    <div style="display:flex;flex-direction:column;gap:10px;">
-      <input id="gk-manual-name" class="field-input" placeholder="Course name *" value="${prefillName || ''}"/>
-      <input id="gk-manual-city" class="field-input" placeholder="City, ST (e.g. Pebble Beach, CA)"/>
-      <button class="modal-btn secondary" onclick="runPSAILookup('${resultsId}','${context}')" id="ps-lookup-btn-${resultsId}" style="margin-top:0;">
-        ✦ Look up scorecard
-      </button>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-        <input id="gk-manual-par"    class="field-input" type="number" placeholder="Par (72)"/>
-        <input id="gk-manual-yards"  class="field-input" type="number" placeholder="Yards (6500)"/>
-        <input id="gk-manual-rating" class="field-input" type="number" step="0.1" placeholder="Rating (72.0)"/>
-        <input id="gk-manual-slope"  class="field-input" type="number" placeholder="Slope (113)"/>
-      </div>
-      <input id="gk-manual-tee" class="field-input" placeholder="Tee name (e.g. Blue)"/>
-      <button class="modal-btn" onclick="saveManualCourseEntry('${resultsId}','${context}')">Save & use this course →</button>
-    </div>`;
-}
-
-// AI lookup triggered from within the PureStrike manual entry form
-let _psAiData = {};
-async function runPSAILookup(resultsId, context) {
-  const name = document.getElementById('gk-manual-name')?.value?.trim();
-  const city = document.getElementById('gk-manual-city')?.value?.trim() || '';
-  if (!name) { alert('Enter a course name first'); return; }
-
-  const btn = document.getElementById(`ps-lookup-btn-${resultsId}`);
-  const resultEl = document.getElementById(`ps-ai-result-${resultsId}`);
-  if (btn) { btn.textContent = 'Looking up…'; btn.disabled = true; }
-  if (resultEl) resultEl.style.display = 'block';
-  if (resultEl) resultEl.innerHTML = '<div style="font-size:13px;color:var(--flag);">Searching for scorecard…</div>';
-
-  const result = await lookupCourseAI(name, city);
-
-  if (btn) { btn.textContent = '✦ Look up scorecard'; btn.disabled = false; }
-
-  if (result) {
-    _psAiData[resultsId] = result;
-    const par = result.holes.reduce((s,h) => s+h.par, 0);
-    // Pre-fill form fields
-    document.getElementById('gk-manual-par').value    = par;
-    if (result.tees?.[0]) {
-      document.getElementById('gk-manual-tee').value    = result.tees[0].name || '';
-      document.getElementById('gk-manual-rating').value = result.tees[0].rating || '';
-      document.getElementById('gk-manual-slope').value  = result.tees[0].slope || '';
-      document.getElementById('gk-manual-yards').value  = result.tees[0].yards || '';
-    }
-    if (resultEl) resultEl.innerHTML = `<div style="font-size:13px;color:#4a9a4a;">✓ Scorecard found — ${result.holes.length} holes, Par ${par}. Fields pre-filled. Confirm and save below.</div>`;
-  } else {
-    _psAiData[resultsId] = null;
-    if (resultEl) resultEl.innerHTML = '<div style="font-size:13px;color:var(--muted);">Scorecard not found — fill in the details manually below.</div>';
-  }
-}
-
 async function saveManualCourseEntry(resultsId, context) {
   const name   = document.getElementById('gk-manual-name')?.value?.trim();
   const city   = document.getElementById('gk-manual-city')?.value?.trim() || '';
@@ -5750,44 +5704,40 @@ async function saveManualCourseEntry(resultsId, context) {
 
   if (!name) { alert('Please enter a course name'); return; }
 
+  // Build holes array — distribute pars evenly
   const holeCount = par <= 36 ? 9 : 18;
-  const aiData = _psAiData?.[resultsId];
-
-  // Use AI holes if available, otherwise synthetic defaults
-  const holes = aiData?.holes
-    ? aiData.holes.map(h => ({ hole: h.hole, par: h.par, yards: [0], hcp: h.hcp }))
-    : buildDefaultHoles(holeCount, par);
-
-  // Use all AI tees if available, otherwise just the one the user entered
-  const tees = aiData?.tees?.length
-    ? aiData.tees
-    : [{ name: tee, color: '#3366cc', yards, rating, slope }];
+  const holes = buildDefaultHoles(holeCount, par);
 
   const course = {
     name, city,
     state:  extractStateFromCity(city),
     region: 'Community',
     type:   holeCount <= 9 ? 'executive' : 'regulation',
-    tees, holes,
+    tees:   [{ name: tee, color: '#3366cc', yards, rating, slope }],
+    holes,
     holePars: holes.map(h => h.par)
   };
 
+  // Save btn feedback
   const btn = document.querySelector(`#${resultsId} .modal-btn`) ||
     document.querySelector('[onclick*="saveManualCourseEntry"]');
   if (btn) { btn.textContent = 'Saving…'; btn.disabled = true; }
 
   try {
-    const res = await fetch(`${WORKER_URL}/course`, {
+    // Push to shared Cloudflare KV
+    const res  = await fetch(`${WORKER_URL}/course`, {
       method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-PureStrike-Key': WRITE_KEY },
       body:    JSON.stringify(course)
     });
     const data = await res.json();
     if (data.id) course.id = data.id;
   } catch(e) {
+    // Worker unreachable — still use locally, just won't be shared
     course.id = 'local_' + Date.now();
   }
 
+  // Save locally too
   if (!state.customCourses) state.customCourses = [];
   const exists = state.customCourses.findIndex(c => c.name === course.name && c.city === course.city);
   if (exists >= 0) state.customCourses[exists] = course;
@@ -6556,7 +6506,7 @@ async function adminSaveAllGreens() {
     try {
       const res  = await fetch(`${WORKER_URL}/greens/${encodeURIComponent(kvId)}/${i}`, {
         method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-PureStrike-Key': WRITE_KEY },
         body:    JSON.stringify({ lat, lng, markedBy: state.profile?.name || 'admin' })
       });
       const data = await res.json();
@@ -6577,12 +6527,13 @@ async function adminSaveAllGreens() {
 
 // ===== ADVANCED TRACKING MODE =====
 
-let advMode          = false;  // is advanced tracking active?
-let advShotNum       = 0;      // current shot number this hole
-let advShotPositions = [];     // [{lat,lng,club,carry,lie}] per shot
-let advPutts         = 2;      // putts in putting state
-let advPrevPosition  = null;   // GPS position at last "Next Shot" tap
-let advPendingLie    = null;   // lie selected, waiting to resolve promise
+let advMode          = false;
+let advShotNum       = 0;
+let advShotPositions = []; // [{shotNum, club, carry, lie, startPos, endPos}]
+let advPutts         = 2;
+let advPrevPosition  = null;
+let advPendingLie    = null;
+let advSelectedClub  = '';  // currently selected club in grid
 
 function toggleAdvancedTracking() {
   if (advMode) {
@@ -6674,65 +6625,84 @@ function advStartHole() {
 }
 
 async function advNextShot() {
-  const clubSel = document.getElementById('adv-club-select');
-  const club    = clubSel?.value || '';
+  if (!advSelectedClub) return;
 
-  // Record current shot position before lie prompt
-  const shotPos = gpsPosition ? { ...gpsPosition } : null;
+  const shotPos       = gpsPosition ? { ...gpsPosition } : null;
+  const manualCarryEl = document.getElementById('adv-manual-carry');
+  const manualCarry   = manualCarryEl?.value ? parseInt(manualCarryEl.value) : null;
 
-  // Calculate carry from previous position
-  let carry = null;
-  if (advPrevPosition && shotPos) {
+  // Carry: prefer manual override, fall back to GPS delta
+  let carry = manualCarry;
+  if (carry == null && advPrevPosition && shotPos) {
     carry = haversineYards(advPrevPosition.lat, advPrevPosition.lng, shotPos.lat, shotPos.lng);
   }
 
-  // Save the shot we just completed
+  // Save this shot (lie filled in after prompt)
   advShotPositions.push({
-    shotNum: advShotNum,
-    club,
+    shotNum:  advShotNum,
+    club:     advSelectedClub,
     carry,
     startPos: advPrevPosition ? { ...advPrevPosition } : null,
-    endPos:   shotPos
+    endPos:   shotPos,
+    lie:      null,
+    penalty:  false
   });
 
-  // Show carry for previous shot
-  if (carry !== null) {
-    document.getElementById('adv-last-carry').textContent = carry;
-  }
+  document.getElementById('adv-last-carry').textContent = carry != null ? carry : '—';
 
-  // Show lie sheet to categorize where ball landed
-  const lie = await advPromptLie(carry, club);
+  // Prompt for lie
+  const lie = await advPromptLie(carry, advSelectedClub);
+  advShotPositions[advShotPositions.length-1].lie = lie;
 
   if (lie === 'Green') {
-    // Switch to putting mode
-    advShotPositions[advShotPositions.length-1].lie = 'Green';
-    advPutts = 2;
-    document.getElementById('adv-putt-display').textContent     = advPutts;
-    document.getElementById('adv-state-tracking').style.display = 'none';
-    document.getElementById('adv-state-putting').style.display  = 'block';
+    advGoToGreen();
     return;
   }
 
-  // Update prev position and move to next shot
-  advPrevPosition = shotPos;
-  advShotPositions[advShotPositions.length-1].lie = lie;
-  advShotNum++;
+  if (lie === 'OB') {
+    // OB: add penalty stroke, mark shot, but DON'T advance prevPosition
+    // prevPosition stays at last valid starting point so next carry
+    // measures correctly from the re-play position (tee or drop)
+    advShotPositions[advShotPositions.length-1].penalty = true;
+    advShotNum++; // OB shot counts as a stroke
 
-  document.getElementById('adv-shot-num').textContent   = advShotNum;
-  document.getElementById('adv-current-club').textContent = club || '—';
-  if (clubSel) clubSel.value = '';
+    advUpdateShotSummary();
+    advShowOBToast();
+
+    // Reset for next shot — prevPosition intentionally unchanged
+    advSelectedClub = '';
+    document.getElementById('adv-shot-num').textContent       = advShotNum;
+    document.getElementById('adv-shot-num-label').textContent = advShotNum;
+    if (manualCarryEl) manualCarryEl.value = '';
+    advBuildClubGrid();
+    advSetNextEnabled(false);
+    advUpdateToGreen();
+    return;
+  }
+
+  // Normal lie — advance prevPosition to current ball location
+  advPrevPosition = shotPos;
+  advShotNum++;
+  advSelectedClub = '';
+
+  document.getElementById('adv-shot-num').textContent       = advShotNum;
+  document.getElementById('adv-shot-num-label').textContent = advShotNum;
+  if (manualCarryEl) manualCarryEl.value = '';
+
+  advBuildClubGrid();
+  advSetNextEnabled(false);
+  advUpdateShotSummary();
+  advUpdateToGreen();
 }
 
 function advPromptLie(carry, club) {
   return new Promise(resolve => {
     const sheet   = document.getElementById('adv-lie-sheet');
     const overlay = document.getElementById('adv-lie-overlay');
-    const info    = document.getElementById('adv-lie-shot-info');
-
-    info.textContent = carry != null
-      ? `Shot ${advShotNum} · ${carry}y carry${club ? ' · ' + club : ''}`
-      : `Shot ${advShotNum}${club ? ' · ' + club : ''}`;
-
+    document.getElementById('adv-lie-shot-info').textContent =
+      `Shot ${advShotNum}${club ? ' · ' + club : ''}`;
+    document.getElementById('adv-lie-carry-info').textContent =
+      carry != null ? carry + ' yards carry' : '';
     sheet.style.display   = 'block';
     overlay.style.display = 'block';
     advPendingLie = resolve;
@@ -6745,51 +6715,114 @@ function advSelectLie(lie) {
   if (advPendingLie) { advPendingLie(lie); advPendingLie = null; }
 }
 
+function advCancelLie() {
+  document.getElementById('adv-lie-sheet').style.display   = 'none';
+  document.getElementById('adv-lie-overlay').style.display = 'none';
+  if (advPendingLie) { advPendingLie('Fairway'); advPendingLie = null; }
+}
+
+function advShowOBToast() {
+  // Remove any existing toast
+  document.getElementById('adv-ob-toast')?.remove();
+  const toast = document.createElement('div');
+  toast.id = 'adv-ob-toast';
+  toast.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:600;background:#cc3333;color:#fff;font-family:"DM Sans",sans-serif;font-size:13px;font-weight:700;padding:10px 20px;border-radius:100px;box-shadow:0 4px 16px rgba(0,0,0,0.4);white-space:nowrap';
+  toast.textContent = '⚠️ OB — +1 penalty stroke added';
+  document.body.appendChild(toast);
+  setTimeout(() => toast?.remove(), 3000);
+}
+
 function advChangePutts(delta) {
   advPutts = Math.max(0, advPutts + delta);
   document.getElementById('adv-putt-display').textContent = advPutts;
+  advUpdatePuttScorePreview();
+}
+
+function advGoToGreen() {
+  advPutts = 2;
+  document.getElementById('adv-putt-display').textContent     = '2';
+  document.getElementById('adv-state-tracking').style.display = 'none';
+  document.getElementById('adv-state-putting').style.display  = 'block';
+  const shots  = advShotPositions.length;
+  const summEl = document.getElementById('adv-putt-summary');
+  if (summEl) summEl.textContent = shots + ' shot' + (shots!==1?'s':'') + ' to reach the green';
+  advUpdatePuttScorePreview();
+}
+
+function advBackToShots() {
+  document.getElementById('adv-state-putting').style.display  = 'none';
+  document.getElementById('adv-state-tracking').style.display = 'block';
+  advUpdateShotSummary();
+}
+
+function advUpdatePuttScorePreview() {
+  const el       = document.getElementById('adv-putt-score-preview');
+  if (!el) return;
+  const shots    = advShotPositions.length;
+  const penalties = advShotPositions.filter(s => s.penalty).length;
+  const total    = shots + penalties + advPutts;
+  const par      = state.selectedCourse?.holes?.[state.currentHole]?.par || 4;
+  const rel      = total - par;
+  const relStr   = rel === 0 ? 'Par' : rel > 0 ? '+'+rel : String(rel);
+  const color    = rel < 0 ? '#6dd46d' : rel > 0 ? '#e87070' : 'rgba(255,255,255,0.5)';
+  const penStr   = penalties > 0 ? ` + ${penalties} penalty` : '';
+  el.innerHTML   = `Score: <span style="font-weight:700;color:${color}">${total} (${relStr})<\/span> — ${shots} shot${shots!==1?'s':''}${penStr} + ${advPutts} putt${advPutts!==1?'s':''}`;
+}
+
+function advUpdateShotSummary() {
+  const el = document.getElementById('adv-shot-summary');
+  if (!el || advShotPositions.length === 0) { if(el) el.innerHTML=''; return; }
+  el.innerHTML = advShotPositions.map((s,i) => {
+    const carry = s.carry != null ? s.carry+'y' : '?y';
+    const lie   = s.penalty ? '⚠️OB' : (s.lie || '?');
+    const color = s.penalty ? '#e87070' : 'var(--flag)';
+    return `<div style="background:rgba(255,255,255,0.06);border-radius:6px;padding:4px 8px;font-size:11px;white-space:nowrap">
+      <span style="opacity:0.5">S${i+1}<\/span> ${s.club||'?'} <span style="color:${color}">${carry}<\/span> <span style="opacity:0.45">${lie}<\/span>
+    <\/div>`;
+  }).join('');
+}
+
+function advUpdateToGreen() {
+  const el = document.getElementById('adv-to-green');
+  if (!el) return;
+  const holeNum = String(state.currentHole + 1);
+  const green   = gpsGreenData?.[holeNum];
+  if (green && gpsPosition) {
+    el.textContent = haversineYards(gpsPosition.lat, gpsPosition.lng, green.lat, green.lng);
+  } else {
+    el.textContent = '—';
+  }
 }
 
 function advFinishHole() {
-  // Calculate total score: shots + putts
-  const shots      = advShotPositions.length;
-  const totalScore = shots + (advPutts || 0);
+  const shots        = advShotPositions.length;
+  const penalties    = advShotPositions.filter(s => s.penalty).length;
+  const totalScore   = shots + penalties + advPutts;
 
-  // Build shot data for the shot log
-  const hd = state.holeData[state.currentHole];
-  hd.score  = totalScore;
-  hd.putts  = advPutts;
+  const hd   = state.holeData[state.currentHole];
+  hd.score   = totalScore;
+  hd.putts   = advPutts;
 
-  // Populate shots into the hole data so strokes gained can use them
   const course    = state.selectedCourse;
-  const holeYards = course?.holes?.[state.currentHole]?.yards?.[state.currentTeeIdx || 0] || 0;
+  const teeIdx    = state.currentRound?.teeIdx || 0;
+  const holeYards = course?.holes?.[state.currentHole]?.yards?.[teeIdx] || 0;
+
   hd.shots = advShotPositions.map((s, i) => ({
-    distToPin: s.startPos && gpsGreenData[String(state.currentHole+1)]
+    distToPin: s.startPos && gpsGreenData?.[String(state.currentHole+1)]
       ? haversineYards(s.startPos.lat, s.startPos.lng,
           gpsGreenData[String(state.currentHole+1)].lat,
           gpsGreenData[String(state.currentHole+1)].lng)
       : (i === 0 ? holeYards : null),
-    carry:   s.carry || 0,
-    club:    s.club  || '',
-    outcome: s.lie   || '',
+    carry:   s.carry   || 0,
+    club:    s.club    || '',
+    outcome: s.penalty ? 'OB' : (s.lie || ''),
     shape:   'straight'
   }));
 
-  // Update score display
   updateScoreDisplay();
-  changePutts(0); // refresh putt display
-
   saveState();
-
-  // Reset advanced tracking for next hole
   advResetState();
-  if (advMode) {
-    document.getElementById('adv-state-start').style.display    = 'block';
-    document.getElementById('adv-state-tracking').style.display = 'none';
-    document.getElementById('adv-state-putting').style.display  = 'none';
-  }
 
-  // Auto advance to next hole
   if (state.currentHole < course.holes.length - 1) {
     state.currentHole++;
     if (!state.holeData[state.currentHole].score) {
@@ -6803,14 +6836,12 @@ function advFinishHole() {
   }
 }
 
-// Show Advanced Tracking button only when this course has green data
 function updateAdvTrackingBtn() {
-  const btn     = document.getElementById('adv-tracking-btn');
+  const btn = document.getElementById('adv-tracking-btn');
   if (!btn) return;
-  const holeNum = String(state.currentHole + 1);
-  const hasGreen = gpsGreenData && gpsGreenData[holeNum];
   const hasCourse = Object.keys(gpsGreenData || {}).length > 0;
   btn.style.display = hasCourse ? 'block' : 'none';
+  if (advMode) advUpdateToGreen();
 }
 
 // ===== GPS DISTANCE ENGINE =====
@@ -6961,7 +6992,7 @@ async function markGreen() {
       `${WORKER_URL}/greens/${encodeURIComponent(courseId)}/${holeNum}`,
       {
         method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-PureStrike-Key': WRITE_KEY },
         body:    JSON.stringify({
           lat:      gpsPosition.lat,
           lng:      gpsPosition.lng,
