@@ -2586,6 +2586,9 @@ function renderHole() {
   document.getElementById('hole-hcp').textContent = hole.hcp;
 
   if (hd.score === null) hd.score = hole.par;
+  // Enforce putt cap on render — in case existing data is inconsistent
+  const maxPutts = Math.max(0, hd.score - 1);
+  if (hd.putts > maxPutts) hd.putts = maxPutts;
   updateScoreDisplay();
   document.getElementById('putt-display').textContent = hd.putts;
   renderPuttList();
@@ -2670,8 +2673,18 @@ function updateRunningTotal() {
 }
 
 function changeScore(d) {
-  const hd = state.holeData[state.currentHole];
-  hd.score = Math.max(1, (hd.score || state.selectedCourse.holes[state.currentHole].par) + d);
+  const hd  = state.holeData[state.currentHole];
+  const par = state.selectedCourse.holes[state.currentHole].par;
+  hd.score  = Math.max(1, (hd.score || par) + d);
+
+  // Putt cap: putts can never equal or exceed total strokes
+  // (need at least 1 non-putt shot to reach the green)
+  const maxPutts = hd.score - 1;
+  if (hd.putts > maxPutts) {
+    hd.putts = Math.max(0, maxPutts);
+    document.getElementById('putt-display').textContent = hd.putts;
+  }
+
   document.getElementById('score-display').classList.add('score-pop');
   setTimeout(() => document.getElementById('score-display').classList.remove('score-pop'), 300);
   updateScoreDisplay();
@@ -2680,8 +2693,9 @@ function changeScore(d) {
 }
 
 function changePutts(d) {
-  const hd = state.holeData[state.currentHole];
-  hd.putts = Math.max(0, hd.putts + d);
+  const hd       = state.holeData[state.currentHole];
+  const maxPutts = Math.max(0, (hd.score || 1) - 1);  // never >= total strokes
+  hd.putts       = Math.max(0, Math.min(maxPutts, hd.putts + d));
   document.getElementById('putt-display').textContent = hd.putts;
   updatePuttDetailSubtitle();
   refreshFIRGIR();
@@ -2896,6 +2910,7 @@ function finishRound() {
     fw: `${fw}/${fwTotal}`,
     gir: `${gir_count}/${holes.length}`,
     holes: structuredClone(state.holeData),
+    holePars: holes.map(h => h.par),
     lagSuccesses: lagStats.lagSuccesses,
     lagMisses: lagStats.lagMisses,
     lagPct: lagStats.pct,
@@ -3844,13 +3859,18 @@ function calcScoringCategories(rounds) {
     // Skip total-only manual rounds
     if (r.previousRound && r.scoreMode === 'total') return;
 
-    const holePars   = r.holePars;
-    const holeScores = r.holeScores || null; // manual hole-by-hole
-    const holesArr   = r.holes;              // live round hole data
+    const holesArr   = r.holes;
+    // holePars may not exist on older rounds — fall back to holes array
+    const holePars   = r.holePars || (holesArr ? holesArr.map((_, i) => {
+      // We don't have par stored per-hole in older rounds, skip
+      return null;
+    }) : null);
+    const holeScores = r.holeScores || null;
 
-    if (!holePars) return; // no par data, can't categorize
+    if (!holePars) return;
 
     holePars.forEach((par, i) => {
+      if (par == null) return; // older round without par data
       let score = null;
       if (holeScores && holeScores[i] != null) {
         score = holeScores[i];
@@ -6132,17 +6152,24 @@ function savePrevRound() {
   const tee  = c.tees[prState.teeIdx];
   const par  = c.holes.reduce((s,h)=>s+h.par,0);
 
+  // Fill any unset hole scores with par (player may have skipped some holes)
+  const filledScores = c.holes.map((hole, i) =>
+    (prState.holeScores[i] != null && prState.holeScores[i] > 0)
+      ? prState.holeScores[i]
+      : hole.par
+  );
+
   const score = prState.scoreMode === 'holes'
-    ? prState.holeScores.reduce((s,v)=>s+v,0)
+    ? filledScores.reduce((s,v) => s + v, 0)
     : prState.totalScore;
 
   if (score < 1) { flashPrError('Enter a valid score'); return; }
 
   const diff = calcScoreDifferential(score, tee.rating, tee.slope);
 
-  // Build synthetic hole data for display (par scores if total-only mode)
+  // Build hole data — use filledScores so no nulls
   const holesData = c.holes.map((hole, i) => ({
-    score: prState.scoreMode === 'holes' ? (prState.holeScores[i] || hole.par) : null,
+    score: prState.scoreMode === 'holes' ? filledScores[i] : null,
     putts: 2, puttDist: 0, putts_detail: [], shots: [], tags: []
   }));
 
@@ -6164,7 +6191,7 @@ function savePrevRound() {
     notes: prState.notes,
     holes: holesData,
     holePars: c.holes.map(h => h.par),
-    holeScores: prState.scoreMode === 'holes' ? [...prState.holeScores] : null,
+    holeScores: prState.scoreMode === 'holes' ? filledScores : null,
     holesPlayed: c.holes.length,
     differential: diff,
     courseRating: tee.rating,
