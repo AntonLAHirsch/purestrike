@@ -1605,16 +1605,26 @@
     </div>
 
     <!-- Step 4: Which clubs in this category -->
+    <!-- Step 4: Which clubs (multi) OR Distance (single like Driver) -->
     <div id="club-step-4" style="display:none">
-      <div class="field-label" style="margin-bottom:6px" id="club-select-label">Which clubs?</div>
-      <div style="font-size:11px;opacity:0.4;margin-bottom:12px">Select all that apply — same brand and model will be assigned to each</div>
-      <div id="club-which-picker" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px"></div>
+      <!-- Multi-club selection -->
+      <div id="club-step-4-multi" style="display:none">
+        <div class="field-label" style="margin-bottom:6px" id="club-select-label">Which clubs?</div>
+        <div style="font-size:11px;opacity:0.4;margin-bottom:12px">Select all that apply — same brand and model will be assigned to each</div>
+        <div id="club-which-picker" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px"></div>
+      </div>
+      <!-- Single club distance (Driver) -->
+      <div id="club-step-4-single" style="display:none">
+        <div class="field-label" style="margin-bottom:4px">Set average carry distance</div>
+        <div style="font-size:11px;opacity:0.4;margin-bottom:12px">Tap +/− or a preset to set your typical carry</div>
+        <div id="club-dist-list-single"></div>
+      </div>
     </div>
 
-    <!-- Step 5: Distance per club -->
+    <!-- Step 5: Distance per club (multi) -->
     <div id="club-step-5" style="display:none">
       <div class="field-label" style="margin-bottom:4px">Set average carry distance</div>
-      <div style="font-size:11px;opacity:0.4;margin-bottom:12px">Adjust each club individually — tap a club to edit</div>
+      <div style="font-size:11px;opacity:0.4;margin-bottom:12px">Adjust each club individually</div>
       <div id="club-dist-list"></div>
     </div>
 
@@ -5138,8 +5148,21 @@ function renderClubWizardStep() {
   if (clubWizardStep===1) renderClubCategoryPicker();
   if (clubWizardStep===2) renderBrandPicker();
   if (clubWizardStep===3) renderModelPicker();
-  if (clubWizardStep===4 && !cat?.single) renderWhichClubsPicker();
-  if (clubWizardStep===4 && cat?.single && !cat?.noDist) renderSingleDistStep();
+  if (clubWizardStep===4 && !cat?.single) {
+    document.getElementById('club-step-4-multi').style.display  = 'block';
+    document.getElementById('club-step-4-single').style.display = 'none';
+    renderWhichClubsPicker();
+  }
+  if (clubWizardStep===4 && cat?.single && !cat?.noDist) {
+    document.getElementById('club-step-4-multi').style.display  = 'none';
+    document.getElementById('club-step-4-single').style.display = 'block';
+    renderSingleDistStep();
+  }
+  if (clubWizardStep===4 && cat?.noDist) {
+    // Putter — nothing to render, button says Add to Bag
+    document.getElementById('club-step-4-multi').style.display  = 'none';
+    document.getElementById('club-step-4-single').style.display = 'none';
+  }
   if (clubWizardStep===5) renderMultiDistStep();
 }
 
@@ -5244,7 +5267,7 @@ function renderSingleDistStep() {
   clubWizardData._singleClub = club;
   if (!clubWizardData.clubDists[club]) clubWizardData.clubDists[club] = CLUB_DIST_DEFAULTS[club]||150;
   const dist = clubWizardData.clubDists[club];
-  document.getElementById('club-dist-list').innerHTML = `
+  document.getElementById('club-dist-list-single').innerHTML = `
     <div style="background:rgba(255,255,255,0.05);border-radius:14px;padding:16px;text-align:center">
       <div style="font-size:13px;font-weight:600;margin-bottom:12px">${clubWizardData.brandName} ${clubWizardData.model} · ${club}<\/div>
       <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:12px">
@@ -5319,9 +5342,16 @@ function clubStepNext() {
     clubWizardStep = cat?.single ? total : 4;
   } else if (clubWizardStep===4) {
     if (!cat?.single) {
+      // Multi-club: validate selection then go to distance step
       if (clubWizardData.selectedClubs.length===0) { showWizardError('Please select at least one club'); return; }
       clubWizardStep=5;
-    } else { addClubsFromWizard(); return; }
+    } else if (cat?.noDist) {
+      // Putter: no distance needed, save immediately
+      addClubsFromWizard(); return;
+    } else {
+      // Driver: distance step is step 4 — save now since user just set distance
+      addClubsFromWizard(); return;
+    }
   } else if (clubWizardStep===5) {
     addClubsFromWizard(); return;
   }
